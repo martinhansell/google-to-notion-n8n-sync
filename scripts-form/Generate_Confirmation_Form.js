@@ -565,7 +565,9 @@ function setupConfirmationInputLog() {
     'Current Proposed Replacement',
     'New Proposed Replacement',
     'Validation Status',
-    'Validation Message'
+    'Validation Message',
+    'Write-Back Status',
+    'Write-Back Message'
   ];
 
   sheet.clear();
@@ -615,15 +617,36 @@ function handleConfirmationSubmission(e) {
   const validation =
     validateConfirmationSubmission_(answers);
   
-  if (
-      validation.status === 'Accepted' &&
-      answers['What would you like to do?'] === 'Confirm'
-  ) {
-    writeConfirmedAssignment_(
-      answers,
-      response.getTimestamp()
-    );
-  }
+    let writeBackStatus = 'Not Attempted';
+    let writeBackMessage = '';
+    
+    if (validation.status === 'Accepted') {
+      try {
+        const action =
+          answers['What would you like to do?'];
+    
+        if (action === 'Confirm') {
+          writeConfirmedAssignment_(
+            answers,
+            response.getTimestamp()
+          );
+    
+          writeBackStatus = 'Success';
+          writeBackMessage = 'Confirmed write-back completed';
+        }
+    
+        if (action === 'Seeking Replacement') {
+          writeSeekingReplacement_(answers);
+    
+          writeBackStatus = 'Success';
+          writeBackMessage = 'Seeking Replacement write-back completed';
+        }
+    
+      } catch (error) {
+        writeBackStatus = 'Needs Review';
+        writeBackMessage = String(error.message || error);
+      }
+    }}
 
   const spreadsheet =
     getConfirmationResponseSpreadsheet_();
@@ -653,9 +676,10 @@ function handleConfirmationSubmission(e) {
     answers['Current Proposed Replacement'] || '',
     answers['New Proposed Replacement'] || '',
     validation.status,
-    validation.message
+    validation.message,
+    writeBackStatus,
+    writeBackMessage
   ]);
-}
 
 function validateConfirmationSubmission_(answers) {
   const assignmentId = String(
@@ -764,7 +788,7 @@ function validateConfirmationSubmission_(answers) {
   if (initialAction) {
     if (
       canonicalConfirmation &&
-      canonicalConfirmation !== 'Awaiting' &&
+      canonicalConfirmation !== 'Awaiting Confirmation' &&
       canonicalConfirmation !== 'Not Requested'
     ) {
       return {
@@ -961,4 +985,43 @@ function writeConfirmedAssignment_(answers, responseTimestamp) {
   // J = Confirmed At
   sheet.getRange(rowNumber, 10)
     .setValue(responseTimestamp);
+}
+
+//*============================================================
+//Set Confirmation = Seeking Replacement and record the proposed replacement in "Assignments — Sync" form
+//============================================================*/
+
+function writeSeekingReplacement_(answers, proposedReplacement) {
+  const spreadsheet = SpreadsheetApp.openById(
+    '1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA'
+  );
+
+  const sheet = spreadsheet.getSheetByName(
+    'Assignments — Sync'
+  );
+
+  const assignmentIds = sheet
+    .getRange(2, 1, sheet.getLastRow() - 1, 1)
+    .getValues()
+    .flat()
+    .map(value => String(value).trim());
+
+  const index = assignmentIds.indexOf(assignmentId);
+
+  if (index === -1) {
+    throw new Error(
+      'Assignment ID not found during replacement write-back: ' +
+      assignmentId
+    );
+  }
+
+  const rowNumber = index + 2;
+
+  // H = Confirmation
+  sheet.getRange(rowNumber, 8)
+    .setValue('Seeking Replacement');
+
+  // P = Proposed Replacement
+  sheet.getRange(rowNumber, 16)
+    .setValue(proposedReplacement);
 }
