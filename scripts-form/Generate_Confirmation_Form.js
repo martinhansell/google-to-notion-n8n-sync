@@ -646,7 +646,7 @@ function handleConfirmationSubmission(e) {
         writeBackStatus = 'Needs Review';
         writeBackMessage = String(error.message || error);
       }
-    }}
+    }
 
   const spreadsheet =
     getConfirmationResponseSpreadsheet_();
@@ -680,6 +680,7 @@ function handleConfirmationSubmission(e) {
     writeBackStatus,
     writeBackMessage
   ]);
+}
 
 function validateConfirmationSubmission_(answers) {
   const assignmentId = String(
