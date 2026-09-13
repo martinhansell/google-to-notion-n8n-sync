@@ -614,6 +614,16 @@ function handleConfirmationSubmission(e) {
 
   const validation =
     validateConfirmationSubmission_(answers);
+  
+  if (
+      validation.status === 'Accepted' &&
+      answers['What would you like to do?'] === 'Confirm'
+  ) {
+    writeConfirmedAssignment_(
+      answers,
+      response.getTimestamp()
+    );
+  }
 
   const spreadsheet =
     getConfirmationResponseSpreadsheet_();
@@ -903,4 +913,52 @@ function buildPrefilledConfirmationUrl_(form, data) {
   return response.toPrefilledUrl();
 }
 
+/*============================================================
+// 6. WRITE CONFIRMED ASSIGNMENT
+// This is the first point where an Accepted form response is allowed to change the canonical operational record.
+============================================================*/
 
+function writeConfirmedAssignment_(answers, responseTimestamp) {
+  const assignmentId = String(
+    answers['Assignment ID'] || ''
+  ).trim();
+
+  const spreadsheet = SpreadsheetApp.openById(
+    '1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA'
+  );
+
+  const sheet = spreadsheet.getSheetByName(
+    'Assignments — Sync'
+  );
+
+  if (!sheet) {
+    throw new Error('Assignments — Sync tab not found.');
+  }
+
+  const lastRow = sheet.getLastRow();
+
+  const assignmentIds = sheet
+    .getRange(2, 1, lastRow - 1, 1)
+    .getValues()
+    .flat()
+    .map(value => String(value).trim());
+
+  const index = assignmentIds.indexOf(assignmentId);
+
+  if (index === -1) {
+    throw new Error(
+      'Assignment ID not found during write-back: ' +
+      assignmentId
+    );
+  }
+
+  const rowNumber = index + 2;
+
+  // H = Confirmation
+  sheet.getRange(rowNumber, 8)
+    .setValue('Confirmed');
+
+  // J = Confirmed At
+  sheet.getRange(rowNumber, 10)
+    .setValue(responseTimestamp);
+}
