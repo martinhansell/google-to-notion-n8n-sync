@@ -2,12 +2,70 @@
 // ASSIGNMENT CONFIRMATION FORM — CONSOLIDATED PROTOTYPE
 // ============================================================
 
-const ROSTER_FILE_NAME = 'SAFE Copy of Bible Facilitation Roster@20260903';
+const ROSTER_SPREADSHEET_ID = '1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA';
+const ASSIGNMENTS_SYNC_TAB = 'Assignments — Sync';
 const FACILITATOR_LISTS_TAB = 'FacilitatorLists';
+const CONFIRMATION_LOG_TAB = 'Confirmation_Input_Log';
+
+// Assignments — Sync columns
+const COL_ASSIGNMENT_ID = 1;          // A
+const COL_ASSIGNMENT_TOKEN = 2;       // B
+const COL_FACILITATOR_NAME = 5;       // E
+const COL_ROLE = 6;                   // F
+const COL_CONFIRMATION = 8;           // H
+const COL_CONFIRMED_AT = 10;          // J
+const COL_ASSIGNMENT_STATE = 15;      // O
+const COL_PROPOSED_REPLACEMENT = 16;  // P
 
 
 // ============================================================
-// 1. REBUILD THE COMPLETE FORM
+// 1. COMMON HELPERS
+// ============================================================
+
+function getRosterSpreadsheet_() {
+  return SpreadsheetApp.openById(ROSTER_SPREADSHEET_ID);
+}
+
+function getAssignmentsSheet_() {
+  const sheet = getRosterSpreadsheet_().getSheetByName(ASSIGNMENTS_SYNC_TAB);
+
+  if (!sheet) {
+    throw new Error(ASSIGNMENTS_SYNC_TAB + ' tab not found.');
+  }
+
+  return sheet;
+}
+
+function getAssignmentRecord_(assignmentId) {
+  const sheet = getAssignmentsSheet_();
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow < 2) {
+    return null;
+  }
+
+  const rows = sheet
+    .getRange(2, 1, lastRow - 1, COL_PROPOSED_REPLACEMENT)
+    .getValues();
+
+  const index = rows.findIndex(row =>
+    String(row[COL_ASSIGNMENT_ID - 1]).trim() === assignmentId
+  );
+
+  if (index === -1) {
+    return null;
+  }
+
+  return {
+    sheet: sheet,
+    rowNumber: index + 2,
+    row: rows[index]
+  };
+}
+
+
+// ============================================================
+// 2. FORM BUILD / REBUILD
 // ============================================================
 
 function clearFormBranching_(form) {
@@ -33,7 +91,6 @@ function rebuildAssignmentConfirmationForm() {
 
   clearFormBranching_(form);
 
-  // Delete every existing item so we start from one known structure.
   const existingItems = form.getItems();
 
   for (let i = existingItems.length - 1; i >= 0; i--) {
@@ -52,8 +109,7 @@ function rebuildAssignmentConfirmationForm() {
 
 
   // ----------------------------------------------------------
-  // INITIAL FACILITATION DATA
-  // Later populated through the facilitator-specific secure link.
+  // SECTION 1 — FACILITATION DETAILS / ROUTER
   // ----------------------------------------------------------
 
   form.addSectionHeaderItem()
@@ -91,18 +147,22 @@ function rebuildAssignmentConfirmationForm() {
     .setTitle('Current Confirmation State')
     .setRequired(true);
 
+  const responseStageItem = form.addMultipleChoiceItem()
+    .setTitle('Response Stage')
+    .setRequired(true);
+
 
   // ----------------------------------------------------------
   // SECTION 2 — INITIAL RESPONSE
   // ----------------------------------------------------------
 
-  const responseSection = form.addPageBreakItem()
+  const initialResponseSection = form.addPageBreakItem()
     .setTitle('Your Response')
     .setHelpText(
       'Please confirm your facilitation or indicate that you are seeking a replacement.'
     );
 
-  const actionItem = form.addMultipleChoiceItem()
+  const initialActionItem = form.addMultipleChoiceItem()
     .setTitle('What would you like to do?')
     .setRequired(true);
 
@@ -123,61 +183,43 @@ function rebuildAssignmentConfirmationForm() {
 
 
   // ----------------------------------------------------------
-  // SECTION 4 — SEEKING REPLACEMENT
+  // SECTION 4 — INITIAL REPLACEMENT PROPOSAL
   // ----------------------------------------------------------
 
-  const seekingSection = form.addPageBreakItem()
-    .setTitle('Seeking Replacement')
+  const initialReplacementSection = form.addPageBreakItem()
+    .setTitle('Replacement Proposal')
     .setHelpText(
-      'Select the facilitator you are currently approaching as a possible replacement.'
+      'Select the facilitator you are approaching and record the current status.'
     );
 
-  const seekingDropdown = form.addListItem()
+  form.addListItem()
     .setTitle('Who are you approaching?')
     .setChoiceValues(
       getEligibleFacilitators_()
     )
     .setRequired(true);
 
-  seekingSection.setGoToPage(
-    FormApp.PageNavigationType.SUBMIT
-  );
-
-
-  // ----------------------------------------------------------
-  // INITIAL RESPONSE BRANCHING
-  // ----------------------------------------------------------
-
-  actionItem.setChoices([
-    actionItem.createChoice(
-      'Confirm',
-      confirmSection
-    ),
-
-    actionItem.createChoice(
-      'Seeking Replacement',
-      seekingSection
-    )
-  ]);
+  const initialReplacementStatus = form.addMultipleChoiceItem()
+    .setTitle('Initial Replacement Status')
+    .setRequired(true);
 
 
   // ----------------------------------------------------------
   // SECTION 5 — REPLACEMENT FOLLOW-UP
-  // This will later be reached through a follow-up secure link.
   // ----------------------------------------------------------
 
   const followUpSection = form.addPageBreakItem()
     .setTitle('Replacement Follow-Up')
     .setHelpText(
-      'Review the current replacement status for this facilitation.'
+      'Review the current proposed replacement and update its status.'
     );
 
   form.addTextItem()
     .setTitle('Current Proposed Replacement')
-    .setRequired(false);
+    .setRequired(true);
 
-  const replacementStatusItem = form.addMultipleChoiceItem()
-    .setTitle('What is the current replacement status?')
+  const followUpStatus = form.addMultipleChoiceItem()
+    .setTitle('Replacement Follow-Up Status')
     .setRequired(true);
 
 
@@ -185,10 +227,10 @@ function rebuildAssignmentConfirmationForm() {
   // SECTION 6 — CHANGE PROPOSED REPLACEMENT
   // ----------------------------------------------------------
 
-  const newReplacementSection = form.addPageBreakItem()
+  const changeReplacementSection = form.addPageBreakItem()
     .setTitle('Select New Replacement')
     .setHelpText(
-      'Choose the facilitator you are now approaching as the proposed replacement.'
+      'Choose the facilitator you are now approaching and record the current status.'
     );
 
   form.addListItem()
@@ -198,61 +240,176 @@ function rebuildAssignmentConfirmationForm() {
     )
     .setRequired(true);
 
-  newReplacementSection.setGoToPage(
+  const newReplacementStatus = form.addMultipleChoiceItem()
+    .setTitle('New Replacement Status')
+    .setRequired(true);
+
+
+  // ----------------------------------------------------------
+  // ROUTING: SECTION 1
+  // ----------------------------------------------------------
+
+  responseStageItem.setChoices([
+    responseStageItem.createChoice(
+      'Initial Response',
+      initialResponseSection
+    ),
+    responseStageItem.createChoice(
+      'Replacement Follow-Up',
+      followUpSection
+    )
+  ]);
+
+
+  // ----------------------------------------------------------
+  // ROUTING: SECTION 2
+  // ----------------------------------------------------------
+
+  initialActionItem.setChoices([
+    initialActionItem.createChoice(
+      'Confirm',
+      confirmSection
+    ),
+    initialActionItem.createChoice(
+      'Seeking Replacement',
+      initialReplacementSection
+    )
+  ]);
+
+
+  // ----------------------------------------------------------
+  // ROUTING: SECTION 4
+  // ----------------------------------------------------------
+
+  initialReplacementStatus.setChoices([
+    initialReplacementStatus.createChoice(
+      'Replacement Confirmed',
+      FormApp.PageNavigationType.SUBMIT
+    ),
+    initialReplacementStatus.createChoice(
+      'Still Awaiting Confirmation',
+      FormApp.PageNavigationType.SUBMIT
+    )
+  ]);
+
+  initialReplacementSection.setGoToPage(
     FormApp.PageNavigationType.SUBMIT
   );
 
 
   // ----------------------------------------------------------
-  // FOLLOW-UP BRANCHING
+  // ROUTING: SECTION 5
   // ----------------------------------------------------------
 
-  replacementStatusItem.setChoices([
-    replacementStatusItem.createChoice(
+  followUpStatus.setChoices([
+    followUpStatus.createChoice(
       'Replacement Confirmed',
       FormApp.PageNavigationType.SUBMIT
     ),
-
-    replacementStatusItem.createChoice(
+    followUpStatus.createChoice(
       'Still Awaiting Confirmation',
       FormApp.PageNavigationType.SUBMIT
     ),
-
-    replacementStatusItem.createChoice(
+    followUpStatus.createChoice(
       'Change Proposed Replacement',
-      newReplacementSection
+      changeReplacementSection
     )
   ]);
 
-  Logger.log('Assignment Confirmation Form rebuilt successfully.');
+
+  // ----------------------------------------------------------
+  // ROUTING: SECTION 6
+  // ----------------------------------------------------------
+
+  newReplacementStatus.setChoices([
+    newReplacementStatus.createChoice(
+      'Replacement Confirmed',
+      FormApp.PageNavigationType.SUBMIT
+    ),
+    newReplacementStatus.createChoice(
+      'Still Awaiting Confirmation',
+      FormApp.PageNavigationType.SUBMIT
+    )
+  ]);
+
+  changeReplacementSection.setGoToPage(
+    FormApp.PageNavigationType.SUBMIT
+  );
+
+
+  verifyConfirmationFormDesign_();
+
+  Logger.log(
+    'Assignment Confirmation Form rebuilt and verified successfully.'
+  );
+}
+
+function verifyConfirmationFormDesign_() {
+  const form = FormApp.getActiveForm();
+
+  const requiredSections = [
+    'Your Response',
+    'Confirm Facilitation',
+    'Replacement Proposal',
+    'Replacement Follow-Up',
+    'Select New Replacement'
+  ];
+
+  const actualSections = form
+    .getItems(FormApp.ItemType.PAGE_BREAK)
+    .map(item =>
+      item.asPageBreakItem().getTitle()
+    );
+
+  requiredSections.forEach(title => {
+    if (!actualSections.includes(title)) {
+      throw new Error(
+        'Form verification failed: missing section "' +
+        title +
+        '".'
+      );
+    }
+  });
+
+  const questionTitles = form
+    .getItems()
+    .map(item =>
+      item.getTitle()
+    );
+
+  const requiredQuestions = [
+    'Response Stage',
+    'What would you like to do?',
+    'Who are you approaching?',
+    'Initial Replacement Status',
+    'Current Proposed Replacement',
+    'Replacement Follow-Up Status',
+    'New Proposed Replacement',
+    'New Replacement Status'
+  ];
+
+  requiredQuestions.forEach(title => {
+    if (!questionTitles.includes(title)) {
+      throw new Error(
+        'Form verification failed: missing question "' +
+        title +
+        '".'
+      );
+    }
+  });
+
+  Logger.log(
+    'FORM DESIGN CHECK: all required sections and questions present.'
+  );
 }
 
 
 // ============================================================
-// 2. READ APPROVED FACILITATORS
-// Prototype currently combines Tuesday / Thursday / Singapore.
-// Later this will be filtered according to the actual facilitation.
+// 3. FACILITATOR DROPDOWNS
 // ============================================================
 
-/*function getEligibleFacilitators_() {
-  const files = DriveApp.getFilesByName(
-    ROSTER_FILE_NAME
-  );*/
-
-  function getEligibleFacilitators_() {
-  const spreadsheet = SpreadsheetApp.openById(
-  '1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA'
-  );
-
-  /*if (!files.hasNext()) {
-    throw new Error(
-      'Roster spreadsheet not found: ' + ROSTER_FILE_NAME
-    );
-  }*/
-
-  /*const spreadsheet = SpreadsheetApp.open(
-    files.next()
-  );*/
+function getEligibleFacilitators_() {
+  const spreadsheet = getRosterSpreadsheet_();
 
   const sheet = spreadsheet.getSheetByName(
     FACILITATOR_LISTS_TAB
@@ -278,10 +435,12 @@ function rebuildAssignmentConfirmationForm() {
       3,
       lastRow - 1,
       3
-    ) // Columns C:E
+    )
     .getValues()
     .flat()
-    .map(value => String(value).trim())
+    .map(value =>
+      String(value).trim()
+    )
     .filter(Boolean);
 
   const uniqueNames = [
@@ -297,11 +456,6 @@ function rebuildAssignmentConfirmationForm() {
   return uniqueNames;
 }
 
-
-// ============================================================
-// 3. REFRESH BOTH REPLACEMENT DROPDOWNS
-// ============================================================
-
 function updateReplacementFacilitatorDropdowns() {
   const form = FormApp.getActiveForm();
 
@@ -315,16 +469,21 @@ function updateReplacementFacilitatorDropdowns() {
 
   const dropdowns = form
     .getItems(FormApp.ItemType.LIST)
-    .map(item => item.asListItem());
+    .map(item =>
+      item.asListItem()
+    );
 
   dropdownTitles.forEach(title => {
+
     const dropdown = dropdowns.find(
-      item => item.getTitle() === title
+      item =>
+        item.getTitle() === title
     );
 
     if (!dropdown) {
       throw new Error(
-        'Dropdown not found: ' + title
+        'Dropdown not found: ' +
+        title
       );
     }
 
@@ -340,99 +499,336 @@ function updateReplacementFacilitatorDropdowns() {
 
 
 // ============================================================
-// 4. GENERATE TEST FACILITATOR LINK
+// 4. ASSIGNMENT TOKENS
 // ============================================================
 
-function generateValidationTestLinks() {
-  const form = FormApp.getActiveForm();
+function ensureAssignmentTokens() {
+  const sheet = getAssignmentsSheet_();
 
-  /*const files = DriveApp.getFilesByName(ROSTER_FILE_NAME);*/
+  const lastRow =
+    sheet.getLastRow();
 
-  const spreadsheet = SpreadsheetApp.openById(
-  '1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA'
-  );
-
-  /*if (!files.hasNext()) {
-    throw new Error('Roster spreadsheet not found.');
-  }*/
-
-  const sheet = spreadsheet.getSheetByName('Assignments — Sync');
-
-  if (!sheet) {
-    throw new Error('Assignments — Sync tab not found.');
+  if (lastRow < 2) {
+    throw new Error(
+      'No assignment rows found.'
+    );
   }
 
-  const lastRow = sheet.getLastRow();
-
-  const rows = sheet
-    .getRange(2, 1, lastRow - 1, 15)
+  const values = sheet
+    .getRange(
+      2,
+      COL_ASSIGNMENT_ID,
+      lastRow - 1,
+      2
+    )
     .getValues();
 
-  // A = Assignment ID
-  // B = Assignment Token
-  // E = Facilitator Name
-  // F = Role
-  // H = Confirmation
-  // L = Source Sheet
-  // M = Source Cell
-  // O = Assignment State
+  const tokenValues =
+    values.map(row => {
 
-  const assignment = rows.find(row =>
-    String(row[0]).trim() &&
-    String(row[1]).trim() &&
-    String(row[4]).trim()
+      const assignmentId =
+        String(row[0]).trim();
+
+      const existingToken =
+        String(row[1]).trim();
+
+      if (!assignmentId) {
+        return [''];
+      }
+
+      if (existingToken) {
+        return [existingToken];
+      }
+
+      return [
+        Utilities.getUuid()
+      ];
+    });
+
+  sheet
+    .getRange(
+      2,
+      COL_ASSIGNMENT_TOKEN,
+      tokenValues.length,
+      1
+    )
+    .clearDataValidations();
+
+  sheet
+    .getRange(
+      2,
+      COL_ASSIGNMENT_TOKEN,
+      tokenValues.length,
+      1
+    )
+    .setValues(tokenValues);
+
+  Logger.log(
+    'Missing assignment tokens generated successfully.'
   );
-
-  if (!assignment) {
-    throw new Error('No usable assignment row found.');
-  }
-
-  const validData = {
-    assignmentId: String(assignment[0]).trim(),
-    assignmentToken: String(assignment[1]).trim(),
-    facilitator: String(assignment[4]).trim(),
-    date: 'TEST DATE',
-    location: String(assignment[11]).trim() || 'TEST LOCATION',
-    readingUnit: String(assignment[12]).trim() || 'TEST SESSION',
-    role: String(assignment[5]).trim(),
-    confirmationState:
-      String(assignment[7]).trim() ||
-      String(assignment[14]).trim() ||
-      'Awaiting'
-  };
-
-  const validUrl = buildPrefilledConfirmationUrl_(
-    form,
-    validData
-  );
-
-  const invalidData = {
-    ...validData,
-    assignmentToken: 'INVALID-TOKEN-TEST'
-  };
-
-  const invalidUrl = buildPrefilledConfirmationUrl_(
-    form,
-    invalidData
-  );
-
-  Logger.log('VALID TEST LINK:');
-  Logger.log(validUrl);
-
-  Logger.log('INVALID TOKEN TEST LINK:');
-  Logger.log(invalidUrl);
 }
 
 
 // ============================================================
-// 5. AUDIT FORM STRUCTURE AND BRANCHING
+// 5. PREFILLED LINK HELPERS
+// ============================================================
+
+function deriveResponseStage_(confirmation) {
+
+  if (
+    confirmation === 'Not Requested' ||
+    confirmation === 'Awaiting Confirmation'
+  ) {
+    return 'Initial Response';
+  }
+
+  if (
+    confirmation === 'Seeking Replacement'
+  ) {
+    return 'Replacement Follow-Up';
+  }
+
+  return '';
+}
+
+function buildPrefilledConfirmationUrl_(form, data) {
+
+  const response =
+    form.createResponse();
+
+  const textValues = {
+
+    'Assignment ID':
+      data.assignmentId,
+
+    'Assignment Token':
+      data.assignmentToken,
+
+    'Facilitator':
+      data.facilitator,
+
+    'Date':
+      data.date,
+
+    'Location':
+      data.location,
+
+    'Reading Unit / Session':
+      data.readingUnit,
+
+    'Role':
+      data.role,
+
+    'Current Confirmation State':
+      data.confirmationState,
+
+    'Current Proposed Replacement':
+      data.currentProposedReplacement
+
+  };
+
+  form
+    .getItems(FormApp.ItemType.TEXT)
+    .map(item =>
+      item.asTextItem()
+    )
+    .forEach(item => {
+
+      const value =
+        textValues[
+          item.getTitle()
+        ];
+
+      if (
+        value !== undefined &&
+        value !== ''
+      ) {
+        response.withItemResponse(
+          item.createResponse(value)
+        );
+      }
+    });
+
+  const responseStageItem =
+    form
+      .getItems(
+        FormApp.ItemType.MULTIPLE_CHOICE
+      )
+      .map(item =>
+        item.asMultipleChoiceItem()
+      )
+      .find(item =>
+        item.getTitle() ===
+        'Response Stage'
+      );
+
+  if (!responseStageItem) {
+    throw new Error(
+      'Response Stage question not found.'
+    );
+  }
+
+  response.withItemResponse(
+    responseStageItem.createResponse(
+      data.responseStage
+    )
+  );
+
+  return response.toPrefilledUrl();
+}
+
+
+// ============================================================
+// 6. TEST LINK GENERATOR
+// ============================================================
+
+function generateValidationTestLinks() {
+
+  const form =
+    FormApp.getActiveForm();
+
+  const sheet =
+    getAssignmentsSheet_();
+
+  const lastRow =
+    sheet.getLastRow();
+
+  if (lastRow < 2) {
+    throw new Error(
+      'No assignment rows found.'
+    );
+  }
+
+  const rows = sheet
+    .getRange(
+      2,
+      1,
+      lastRow - 1,
+      COL_PROPOSED_REPLACEMENT
+    )
+    .getValues();
+
+    const TEST_ASSIGNMENT_ID = 'BR-A-000007';
+
+    const assignment =
+      rows.find(row =>
+        String(
+          row[
+            COL_ASSIGNMENT_ID - 1
+          ]
+        ).trim() === TEST_ASSIGNMENT_ID
+      );
+
+  if (!assignment) {
+    throw new Error(
+      'No usable assignment row found.'
+    );
+  }
+
+  const confirmation =
+    String(
+      assignment[
+        COL_CONFIRMATION - 1
+      ] || ''
+    ).trim();
+
+  const responseStage =
+    deriveResponseStage_(
+      confirmation
+    );
+
+  const validData = {
+
+    assignmentId:
+      String(
+        assignment[
+          COL_ASSIGNMENT_ID - 1
+        ]
+      ).trim(),
+
+    assignmentToken:
+      String(
+        assignment[
+          COL_ASSIGNMENT_TOKEN - 1
+        ]
+      ).trim(),
+
+    facilitator:
+      String(
+        assignment[
+          COL_FACILITATOR_NAME - 1
+        ]
+      ).trim(),
+
+    date:
+      'TEST DATE',
+
+    location:
+      'TEST LOCATION',
+
+    readingUnit:
+      'TEST READING UNIT',
+
+    role:
+      String(
+        assignment[
+          COL_ROLE - 1
+        ]
+      ).trim(),
+
+    confirmationState:
+      confirmation,
+
+    responseStage:
+      responseStage,
+
+    currentProposedReplacement:
+      String(
+        assignment[
+          COL_PROPOSED_REPLACEMENT - 1
+        ] || ''
+      ).trim()
+
+  };
+
+  if (
+    responseStage ===
+      'Replacement Follow-Up' &&
+    !validData.currentProposedReplacement
+  ) {
+    throw new Error(
+      'Test assignment is Seeking Replacement but Proposed Replacement is blank.'
+    );
+  }
+
+  const validUrl =
+    buildPrefilledConfirmationUrl_(
+      form,
+      validData
+    );
+
+  Logger.log(
+    'VALID TEST LINK:'
+  );
+
+  Logger.log(
+    validUrl
+  );
+}
+
+
+// ============================================================
+// 7. FORM AUDIT
 // ============================================================
 
 function auditAssignmentConfirmationForm() {
-  const form = FormApp.getActiveForm();
+
+  const form =
+    FormApp.getActiveForm();
 
   Logger.log(
-    'FORM: ' + form.getTitle()
+    'FORM: ' +
+    form.getTitle()
   );
 
   Logger.log(
@@ -445,11 +841,15 @@ function auditAssignmentConfirmationForm() {
   );
 
   form.getItems().forEach(item => {
-    const type = item.getType();
+
+    const type =
+      item.getType();
 
     if (
-      type === FormApp.ItemType.PAGE_BREAK
+      type ===
+      FormApp.ItemType.PAGE_BREAK
     ) {
+
       const section =
         item.asPageBreakItem();
 
@@ -462,8 +862,10 @@ function auditAssignmentConfirmationForm() {
     }
 
     if (
-      type === FormApp.ItemType.MULTIPLE_CHOICE
+      type ===
+      FormApp.ItemType.MULTIPLE_CHOICE
     ) {
+
       const question =
         item.asMultipleChoiceItem();
 
@@ -472,28 +874,33 @@ function auditAssignmentConfirmationForm() {
         question.getTitle()
       );
 
-      question.getChoices().forEach(choice => {
-        const destination =
-          choice.getGotoPage();
+      question
+        .getChoices()
+        .forEach(choice => {
 
-        Logger.log(
-          '  → ' +
-          choice.getValue() +
-          ' | ' +
-          (
-            destination
-              ? 'Go to: ' +
-                destination.getTitle()
-              : 'Navigation: ' +
-                choice.getPageNavigationType()
-          )
-        );
-      });
+          const destination =
+            choice.getGotoPage();
+
+          Logger.log(
+            '  → ' +
+            choice.getValue() +
+            ' | ' +
+            (
+              destination
+                ? 'Go to: ' +
+                  destination.getTitle()
+                : 'Navigation: ' +
+                  choice.getPageNavigationType()
+            )
+          );
+        });
     }
 
     if (
-      type === FormApp.ItemType.LIST
+      type ===
+      FormApp.ItemType.LIST
     ) {
+
       const dropdown =
         item.asListItem();
 
@@ -514,23 +921,32 @@ function auditAssignmentConfirmationForm() {
     }
 
     if (
-      type === FormApp.ItemType.TEXT
+      type ===
+      FormApp.ItemType.TEXT
     ) {
+
       Logger.log(
         'TEXT: ' +
-        item.asTextItem().getTitle()
+        item
+          .asTextItem()
+          .getTitle()
       );
     }
   });
 }
 
-//======================================================
-// Auto-confirmation logging starts here
-//======================================================
+
+// ============================================================
+// 8. RESPONSE LOGGING
+// ============================================================
 
 function getConfirmationResponseSpreadsheet_() {
-  const form = FormApp.getActiveForm();
-  const destinationId = form.getDestinationId();
+
+  const form =
+    FormApp.getActiveForm();
+
+  const destinationId =
+    form.getDestinationId();
 
   if (!destinationId) {
     throw new Error(
@@ -538,17 +954,29 @@ function getConfirmationResponseSpreadsheet_() {
     );
   }
 
-  return SpreadsheetApp.openById(destinationId);
+  return SpreadsheetApp.openById(
+    destinationId
+  );
 }
 
 function setupConfirmationInputLog() {
-  const spreadsheet = getConfirmationResponseSpreadsheet_();
-  const sheetName = 'Confirmation_Input_Log';
 
-  let sheet = spreadsheet.getSheetByName(sheetName);
+  const spreadsheet =
+    getConfirmationResponseSpreadsheet_();
+
+  const sheetName =
+    CONFIRMATION_LOG_TAB;
+
+  let sheet =
+    spreadsheet.getSheetByName(
+      sheetName
+    );
 
   if (!sheet) {
-    sheet = spreadsheet.insertSheet(sheetName);
+    sheet =
+      spreadsheet.insertSheet(
+        sheetName
+      );
   }
 
   const headers = [
@@ -559,11 +987,14 @@ function setupConfirmationInputLog() {
     'Assignment Token',
     'Facilitator',
     'Current Confirmation State',
+    'Response Stage',
     'Initial Action',
     'Proposed Replacement',
+    'Initial Replacement Status',
     'Replacement Follow-Up Status',
     'Current Proposed Replacement',
     'New Proposed Replacement',
+    'New Replacement Status',
     'Validation Status',
     'Validation Message',
     'Write-Back Status',
@@ -573,8 +1004,15 @@ function setupConfirmationInputLog() {
   sheet.clear();
 
   sheet
-    .getRange(1, 1, 1, headers.length)
-    .setValues([headers]);
+    .getRange(
+      1,
+      1,
+      1,
+      headers.length
+    )
+    .setValues([
+      headers
+    ]);
 
   Logger.log(
     'Confirmation_Input_Log created in: ' +
@@ -583,19 +1021,26 @@ function setupConfirmationInputLog() {
 }
 
 function installConfirmationSubmitTrigger() {
-  const form = FormApp.getActiveForm();
 
-  ScriptApp.getProjectTriggers()
+  const form =
+    FormApp.getActiveForm();
+
+  ScriptApp
+    .getProjectTriggers()
     .filter(trigger =>
       trigger.getHandlerFunction() ===
       'handleConfirmationSubmission'
     )
     .forEach(trigger =>
-      ScriptApp.deleteTrigger(trigger)
+      ScriptApp.deleteTrigger(
+        trigger
+      )
     );
 
   ScriptApp
-    .newTrigger('handleConfirmationSubmission')
+    .newTrigger(
+      'handleConfirmationSubmission'
+    )
     .forForm(form)
     .onFormSubmit()
     .create();
@@ -605,60 +1050,89 @@ function installConfirmationSubmitTrigger() {
   );
 }
 
+
+// ============================================================
+// 9. SUBMISSION HANDLER
+// ============================================================
+
 function handleConfirmationSubmission(e) {
-  const response = e.response;
+
+  const response =
+    e.response;
+
   const answers = {};
 
-  response.getItemResponses().forEach(itemResponse => {
-    answers[itemResponse.getItem().getTitle()] =
-      itemResponse.getResponse();
-  });
+  response
+    .getItemResponses()
+    .forEach(itemResponse => {
+
+      answers[
+        itemResponse
+          .getItem()
+          .getTitle()
+      ] =
+        itemResponse
+          .getResponse();
+
+    });
 
   const validation =
-    validateConfirmationSubmission_(answers);
-  
-    let writeBackStatus = 'Not Attempted';
-    let writeBackMessage = '';
-    
-    if (validation.status === 'Accepted') {
-      try {
-        const action =
-          answers['What would you like to do?'];
-    
-        if (action === 'Confirm') {
-          writeConfirmedAssignment_(
-            answers,
-            response.getTimestamp()
-          );
-    
-          writeBackStatus = 'Success';
-          writeBackMessage = 'Confirmed write-back completed';
-        }
-    
-        if (action === 'Seeking Replacement') {
-          writeSeekingReplacement_(answers);
-    
-          writeBackStatus = 'Success';
-          writeBackMessage = 'Seeking Replacement write-back completed';
-        }
-    
-      } catch (error) {
-        writeBackStatus = 'Needs Review';
-        writeBackMessage = String(error.message || error);
-      }
+    validateConfirmationSubmission_(
+      answers
+    );
+
+  let writeBackStatus =
+    'Not Attempted';
+
+  let writeBackMessage =
+    '';
+
+  if (
+    validation.status ===
+    'Accepted'
+  ) {
+
+    try {
+
+      const writeBack =
+        processAcceptedSubmission_(
+          answers,
+          response.getTimestamp()
+        );
+
+      writeBackStatus =
+        writeBack.status;
+
+      writeBackMessage =
+        writeBack.message;
+
+    } catch (error) {
+
+      writeBackStatus =
+        'Needs Review';
+
+      writeBackMessage =
+        String(
+          error &&
+          error.message
+            ? error.message
+            : error
+        );
     }
+  }
 
   const spreadsheet =
     getConfirmationResponseSpreadsheet_();
 
   const sheet =
     spreadsheet.getSheetByName(
-      'Confirmation_Input_Log'
+      CONFIRMATION_LOG_TAB
     );
 
   if (!sheet) {
     throw new Error(
-      'Confirmation_Input_Log does not exist.'
+      CONFIRMATION_LOG_TAB +
+      ' does not exist.'
     );
   }
 
@@ -670,11 +1144,14 @@ function handleConfirmationSubmission(e) {
     answers['Assignment Token'] || '',
     answers['Facilitator'] || '',
     answers['Current Confirmation State'] || '',
+    answers['Response Stage'] || '',
     answers['What would you like to do?'] || '',
     answers['Who are you approaching?'] || '',
-    answers['What is the current replacement status?'] || '',
+    answers['Initial Replacement Status'] || '',
+    answers['Replacement Follow-Up Status'] || '',
     answers['Current Proposed Replacement'] || '',
     answers['New Proposed Replacement'] || '',
+    answers['New Replacement Status'] || '',
     validation.status,
     validation.message,
     writeBackStatus,
@@ -682,118 +1159,209 @@ function handleConfirmationSubmission(e) {
   ]);
 }
 
+
+// ============================================================
+// 10. VALIDATION
+// ============================================================
+
 function validateConfirmationSubmission_(answers) {
-  const assignmentId = String(
-    answers['Assignment ID'] || ''
-  ).trim();
 
-  const submittedToken = String(
-    answers['Assignment Token'] || ''
-  ).trim();
+  const assignmentId =
+    String(
+      answers[
+        'Assignment ID'
+      ] || ''
+    ).trim();
 
-  const submittedFacilitator = String(
-    answers['Facilitator'] || ''
-  ).trim();
+  const submittedToken =
+    String(
+      answers[
+        'Assignment Token'
+      ] || ''
+    ).trim();
+
+  const submittedFacilitator =
+    String(
+      answers[
+        'Facilitator'
+      ] || ''
+    ).trim();
 
   if (!assignmentId) {
     return {
       status: 'Rejected',
-      message: 'Missing Assignment ID'
+      message:
+        'Missing Assignment ID'
     };
   }
 
   if (!submittedToken) {
     return {
       status: 'Rejected',
-      message: 'Missing Assignment Token'
+      message:
+        'Missing Assignment Token'
     };
   }
 
   if (!submittedFacilitator) {
     return {
       status: 'Rejected',
-      message: 'Missing Facilitator'
+      message:
+        'Missing Facilitator'
     };
   }
 
-  /*const files = DriveApp.getFilesByName(ROSTER_FILE_NAME);
-  const spreadsheet = SpreadsheetApp.open(files.next());*/
+  const record =
+    getAssignmentRecord_(
+      assignmentId
+    );
 
-  const spreadsheet = SpreadsheetApp.openById(
-  '1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA'
-  );
-  const sheet = spreadsheet.getSheetByName('Assignments — Sync');
-
-  if (!sheet) {
-    throw new Error('Assignments — Sync tab not found.');
-  }
-
-  const lastRow = sheet.getLastRow();
-
-  const rows = sheet
-    .getRange(2, 1, lastRow - 1, 15)
-    .getValues();
-
-  // A = Assignment ID
-  // B = Assignment Token
-  // E = Facilitator Name
-  // H = Confirmation
-  // O = Assignment State
-
-  const assignment = rows.find(row =>
-    String(row[0]).trim() === assignmentId
-  );
-
-  if (!assignment) {
+  if (!record) {
     return {
       status: 'Rejected',
-      message: 'Assignment ID not found'
+      message:
+        'Assignment ID not found'
     };
   }
 
-  const canonicalToken = String(assignment[1]).trim();
-  const canonicalFacilitator = String(assignment[4]).trim();
-  const canonicalConfirmation = String(assignment[7]).trim();
-  Logger.log(
-  'DEBUG Assignment ' +
-  assignmentId +
-  ' | Canonical Confirmation = "' +
-  canonicalConfirmation +
-  '"'
-);
-  const canonicalAssignmentState = String(assignment[14]).trim();
+  const assignment =
+    record.row;
 
-  if (submittedToken !== canonicalToken) {
-    return {
-      status: 'Rejected',
-      message: 'Assignment Token does not match'
-    };
-  }
-
-  if (submittedFacilitator !== canonicalFacilitator) {
-    return {
-      status: 'Rejected',
-      message: 'Facilitator does not match assignment'
-    };
-  }
-
-  const initialAction =
-    String(answers['What would you like to do?'] || '').trim();
-
-  const followUp =
+  const canonicalToken =
     String(
-      answers['What is the current replacement status?'] || ''
+      assignment[
+        COL_ASSIGNMENT_TOKEN - 1
+      ]
     ).trim();
 
-  // Initial response is only valid while still awaiting response.
-  if (initialAction) {
+  const canonicalFacilitator =
+    String(
+      assignment[
+        COL_FACILITATOR_NAME - 1
+      ]
+    ).trim();
+
+  const canonicalConfirmation =
+    String(
+      assignment[
+        COL_CONFIRMATION - 1
+      ]
+    ).trim();
+
+  const canonicalAssignmentState =
+    String(
+      assignment[
+        COL_ASSIGNMENT_STATE - 1
+      ] || ''
+    ).trim();
+
+  const canonicalProposedReplacement =
+    String(
+      assignment[
+        COL_PROPOSED_REPLACEMENT - 1
+      ] || ''
+    ).trim();
+
+  if (
+    submittedToken !==
+    canonicalToken
+  ) {
+
+    return {
+      status: 'Rejected',
+      message:
+        'Assignment Token does not match'
+    };
+  }
+
+  if (
+    submittedFacilitator !==
+    canonicalFacilitator
+  ) {
+
+    return {
+      status: 'Rejected',
+      message:
+        'Facilitator does not match assignment'
+    };
+  }
+
+  const responseStage =
+    String(
+      answers[
+        'Response Stage'
+      ] || ''
+    ).trim();
+
+  const initialAction =
+    String(
+      answers[
+        'What would you like to do?'
+      ] || ''
+    ).trim();
+
+  const proposedReplacement =
+    String(
+      answers[
+        'Who are you approaching?'
+      ] || ''
+    ).trim();
+
+  const initialReplacementStatus =
+    String(
+      answers[
+        'Initial Replacement Status'
+      ] || ''
+    ).trim();
+
+  const currentProposedReplacement =
+    String(
+      answers[
+        'Current Proposed Replacement'
+      ] || ''
+    ).trim();
+
+  const followUpStatus =
+    String(
+      answers[
+        'Replacement Follow-Up Status'
+      ] || ''
+    ).trim();
+
+  const newProposedReplacement =
+    String(
+      answers[
+        'New Proposed Replacement'
+      ] || ''
+    ).trim();
+
+  const newReplacementStatus =
+    String(
+      answers[
+        'New Replacement Status'
+      ] || ''
+    ).trim();
+
+
+  // ----------------------------------------------------------
+  // INITIAL RESPONSE
+  // ----------------------------------------------------------
+
+  if (
+    responseStage ===
+    'Initial Response'
+  ) {
+
     if (
-      canonicalConfirmation &&
-      canonicalConfirmation !== 'Awaiting Confirmation' &&
-      canonicalConfirmation !== 'Not Requested'
+      canonicalConfirmation !==
+        'Awaiting Confirmation' &&
+      canonicalConfirmation !==
+        'Not Requested'
     ) {
+
       return {
         status: 'Rejected',
+
         message:
           'Initial response is stale; current confirmation state is ' +
           canonicalConfirmation
@@ -801,228 +1369,955 @@ function validateConfirmationSubmission_(answers) {
     }
 
     if (
-      initialAction === 'Seeking Replacement' &&
-      !answers['Who are you approaching?']
+      initialAction !==
+        'Confirm' &&
+      initialAction !==
+        'Seeking Replacement'
     ) {
-      return {
-        status: 'Rejected',
-        message: 'Replacement facilitator not selected'
-      };
-    }
-  }
 
-  // Follow-up is only valid when canonical state is Seeking Replacement.
-  if (followUp) {
-    if (canonicalConfirmation !== 'Seeking Replacement') {
       return {
         status: 'Rejected',
         message:
-          'Replacement follow-up is stale; current confirmation state is ' +
-          (canonicalConfirmation || '(blank)')
+          'Initial response action missing or invalid'
       };
     }
 
     if (
-      followUp === 'Change Proposed Replacement' &&
-      !answers['New Proposed Replacement']
+      initialAction ===
+      'Seeking Replacement'
     ) {
+
+      if (
+        !proposedReplacement
+      ) {
+
+        return {
+          status: 'Rejected',
+          message:
+            'Replacement facilitator not selected'
+        };
+      }
+
+      if (
+        initialReplacementStatus !==
+          'Replacement Confirmed' &&
+        initialReplacementStatus !==
+          'Still Awaiting Confirmation'
+      ) {
+
+        return {
+          status: 'Rejected',
+          message:
+            'Initial replacement status missing or invalid'
+        };
+      }
+    }
+  }
+
+
+  // ----------------------------------------------------------
+  // REPLACEMENT FOLLOW-UP
+  // ----------------------------------------------------------
+
+  else if (
+    responseStage ===
+    'Replacement Follow-Up'
+  ) {
+
+    if (
+      canonicalConfirmation !==
+      'Seeking Replacement'
+    ) {
+
       return {
         status: 'Rejected',
-        message: 'New replacement not selected'
+
+        message:
+          'Replacement follow-up is stale; current confirmation state is ' +
+          canonicalConfirmation
+      };
+    }
+
+    if (
+      !canonicalProposedReplacement
+    ) {
+
+      return {
+        status: 'Rejected',
+        message:
+          'Canonical proposed replacement is missing'
+      };
+    }
+
+    if (
+      !currentProposedReplacement ||
+      currentProposedReplacement !==
+      canonicalProposedReplacement
+    ) {
+
+      return {
+        status: 'Rejected',
+
+        message:
+          'Current proposed replacement does not match canonical record'
+      };
+    }
+
+    if (
+      followUpStatus !==
+        'Replacement Confirmed' &&
+      followUpStatus !==
+        'Still Awaiting Confirmation' &&
+      followUpStatus !==
+        'Change Proposed Replacement'
+    ) {
+
+      return {
+        status: 'Rejected',
+        message:
+          'Replacement follow-up status missing or invalid'
+      };
+    }
+
+    if (
+      followUpStatus ===
+      'Change Proposed Replacement'
+    ) {
+
+      if (
+        !newProposedReplacement
+      ) {
+
+        return {
+          status: 'Rejected',
+          message:
+            'New replacement not selected'
+        };
+      }
+
+      if (
+        newReplacementStatus !==
+          'Replacement Confirmed' &&
+        newReplacementStatus !==
+          'Still Awaiting Confirmation'
+      ) {
+
+        return {
+          status: 'Rejected',
+          message:
+            'New replacement status missing or invalid'
+        };
+      }
+    }
+  }
+
+  else {
+
+    return {
+      status: 'Rejected',
+      message:
+        'Invalid or missing Response Stage'
+    };
+  }
+
+  return {
+
+    status:
+      'Accepted',
+
+    message:
+      'Identity and state transition validated' +
+      (
+        canonicalAssignmentState
+          ? ' | Assignment State: ' +
+            canonicalAssignmentState
+          : ''
+      )
+  };
+}
+
+
+// ============================================================
+// 11. ACCEPTED SUBMISSION ROUTING / WRITE-BACK
+// ============================================================
+
+function processAcceptedSubmission_(
+  answers,
+  responseTimestamp
+) {
+
+  const responseStage =
+    String(
+      answers[
+        'Response Stage'
+      ] || ''
+    ).trim();
+
+
+  // ----------------------------------------------------------
+  // INITIAL RESPONSE
+  // ----------------------------------------------------------
+
+  if (
+    responseStage ===
+    'Initial Response'
+  ) {
+
+    const action =
+      String(
+        answers[
+          'What would you like to do?'
+        ] || ''
+      ).trim();
+
+    if (
+      action ===
+      'Confirm'
+    ) {
+
+      writeConfirmedAssignment_(
+        answers,
+        responseTimestamp
+      );
+
+      return {
+        status:
+          'Success',
+
+        message:
+          'Confirmed write-back completed'
+      };
+    }
+
+    if (
+      action ===
+      'Seeking Replacement'
+    ) {
+
+      const replacementStatus =
+        String(
+          answers[
+            'Initial Replacement Status'
+          ] || ''
+        ).trim();
+
+      writeInitialReplacementResponse_(
+        answers,
+        replacementStatus,
+        responseTimestamp
+      );
+
+      return {
+
+        status:
+          'Success',
+
+        message:
+          replacementStatus ===
+          'Replacement Confirmed'
+            ? 'Replacement Found write-back completed'
+            : 'Seeking Replacement write-back completed'
       };
     }
   }
 
-/*
-  return {
-    status: 'Accepted',
-    message:
-      'Identity and state transition validated' +
-      (canonicalAssignmentState
-        ? ' | Assignment State: ' + canonicalAssignmentState
-        : '')
-  };
-} 
-*/
 
-return {
-  status: 'Accepted',
-  message:
-    'Canonical Confirmation read = "' +
-    canonicalConfirmation +
-    '"'
-};
-}
+  // ----------------------------------------------------------
+  // REPLACEMENT FOLLOW-UP
+  // ----------------------------------------------------------
+
+  if (
+    responseStage ===
+    'Replacement Follow-Up'
+  ) {
+
+    const followUpStatus =
+      String(
+        answers[
+          'Replacement Follow-Up Status'
+        ] || ''
+      ).trim();
 
 
-function ensureAssignmentTokens() {
-  /*const files = DriveApp.getFilesByName(ROSTER_FILE_NAME);*/
+    if (
+      followUpStatus ===
+      'Replacement Confirmed'
+    ) {
 
-  const spreadsheet = SpreadsheetApp.openById(
-  '1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA'
-  );
+      writeReplacementFound_(
+        answers,
 
-  /*if (!files.hasNext()) {
-    throw new Error('Roster spreadsheet not found.');
-  }*/
+        String(
+          answers[
+            'Current Proposed Replacement'
+          ] || ''
+        ).trim(),
 
-  /*const spreadsheet = SpreadsheetApp.open(files.next());*/
+        responseTimestamp
+      );
 
-  const sheet = spreadsheet.getSheetByName('Assignments — Sync');
+      return {
+        status:
+          'Success',
 
-  if (!sheet) {
-    throw new Error('Assignments — Sync tab not found.');
-  }
-
-  const lastRow = sheet.getLastRow();
-
-  if (lastRow < 2) {
-    throw new Error('No assignment rows found.');
-  }
-
-  // Column A = Assignment ID
-  // Column B = Assignment Token
-  const values = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
-
-  const tokenValues = values.map(row => {
-    const assignmentId = String(row[0]).trim();
-    const existingToken = String(row[1]).trim();
-
-    if (!assignmentId) {
-      return [''];
+        message:
+          'Replacement Found write-back completed'
+      };
     }
 
-    if (existingToken) {
-      return [existingToken];
+
+    if (
+      followUpStatus ===
+      'Still Awaiting Confirmation'
+    ) {
+
+      writeReplacementAwaiting_(
+        answers,
+
+        String(
+          answers[
+            'Current Proposed Replacement'
+          ] || ''
+        ).trim()
+      );
+
+      return {
+        status:
+          'Success',
+
+        message:
+          'Seeking Replacement retained'
+      };
     }
 
-    return [Utilities.getUuid()];
-  });
 
-sheet
-  .getRange(2, 2, tokenValues.length, 1)
-  .clearDataValidations();
+    if (
+      followUpStatus ===
+      'Change Proposed Replacement'
+    ) {
 
-  sheet.getRange(2, 2, tokenValues.length, 1).setValues(tokenValues);
+      const newReplacement =
+        String(
+          answers[
+            'New Proposed Replacement'
+          ] || ''
+        ).trim();
 
-  Logger.log('Missing assignment tokens generated successfully.');
-}
+      const newReplacementStatus =
+        String(
+          answers[
+            'New Replacement Status'
+          ] || ''
+        ).trim();
 
-function buildPrefilledConfirmationUrl_(form, data) {
-  const valuesByTitle = {
-    'Assignment ID': data.assignmentId,
-    'Assignment Token': data.assignmentToken,
-    'Facilitator': data.facilitator,
-    'Date': data.date,
-    'Location': data.location,
-    'Reading Unit / Session': data.readingUnit,
-    'Role': data.role,
-    'Current Confirmation State': data.confirmationState
-  };
 
-  const response = form.createResponse();
+      if (
+        newReplacementStatus ===
+        'Replacement Confirmed'
+      ) {
 
-  form
-    .getItems(FormApp.ItemType.TEXT)
-    .map(item => item.asTextItem())
-    .forEach(item => {
-      const value = valuesByTitle[item.getTitle()];
-
-      if (value !== undefined) {
-        response.withItemResponse(
-          item.createResponse(value)
+        writeReplacementFound_(
+          answers,
+          newReplacement,
+          responseTimestamp
         );
+
+        return {
+          status:
+            'Success',
+
+          message:
+            'New proposed replacement recorded and Replacement Found'
+        };
       }
-    });
 
-  return response.toPrefilledUrl();
-}
 
-/*============================================================
-// 6. WRITE CONFIRMED ASSIGNMENT
-// This is the first point where an Accepted form response is allowed to change the canonical operational record.
-============================================================*/
+      if (
+        newReplacementStatus ===
+        'Still Awaiting Confirmation'
+      ) {
 
-function writeConfirmedAssignment_(answers, responseTimestamp) {
-  const assignmentId = String(
-    answers['Assignment ID'] || ''
-  ).trim();
+        writeReplacementAwaiting_(
+          answers,
+          newReplacement
+        );
 
-  const spreadsheet = SpreadsheetApp.openById(
-    '1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA'
-  );
+        return {
+          status:
+            'Success',
 
-  const sheet = spreadsheet.getSheetByName(
-    'Assignments — Sync'
-  );
-
-  if (!sheet) {
-    throw new Error('Assignments — Sync tab not found.');
+          message:
+            'New proposed replacement recorded; still awaiting confirmation'
+        };
+      }
+    }
   }
 
-  const lastRow = sheet.getLastRow();
+  throw new Error(
+    'Accepted submission has no supported write-back route.'
+  );
+}
 
-  const assignmentIds = sheet
-    .getRange(2, 1, lastRow - 1, 1)
-    .getValues()
-    .flat()
-    .map(value => String(value).trim());
 
-  const index = assignmentIds.indexOf(assignmentId);
+// ============================================================
+// 12. WRITE-BACK HELPERS
+// ============================================================
 
-  if (index === -1) {
+function writeConfirmedAssignment_(
+  answers,
+  responseTimestamp
+) {
+
+  const assignmentId =
+    String(
+      answers[
+        'Assignment ID'
+      ] || ''
+    ).trim();
+
+  const record =
+    getAssignmentRecord_(
+      assignmentId
+    );
+
+  if (!record) {
     throw new Error(
       'Assignment ID not found during write-back: ' +
       assignmentId
     );
   }
 
-  const rowNumber = index + 2;
+  record.sheet
+    .getRange(
+      record.rowNumber,
+      COL_CONFIRMATION
+    )
+    .setValue(
+      'Confirmed'
+    );
 
-  // H = Confirmation
-  sheet.getRange(rowNumber, 8)
-    .setValue('Confirmed');
-
-  // J = Confirmed At
-  sheet.getRange(rowNumber, 10)
-    .setValue(responseTimestamp);
+  record.sheet
+    .getRange(
+      record.rowNumber,
+      COL_CONFIRMED_AT
+    )
+    .setValue(
+      responseTimestamp
+    );
 }
 
-//*============================================================
-//Set Confirmation = Seeking Replacement and record the proposed replacement in "Assignments — Sync" form
-//============================================================*/
 
-function writeSeekingReplacement_(answers, proposedReplacement) {
-  const spreadsheet = SpreadsheetApp.openById(
-    '1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA'
+function writeInitialReplacementResponse_(
+  answers,
+  replacementStatus,
+  responseTimestamp
+) {
+
+  const proposedReplacement =
+    String(
+      answers[
+        'Who are you approaching?'
+      ] || ''
+    ).trim();
+
+  if (
+    !proposedReplacement
+  ) {
+
+    throw new Error(
+      'Proposed replacement missing during write-back'
+    );
+  }
+
+
+  if (
+    replacementStatus ===
+    'Replacement Confirmed'
+  ) {
+
+    writeReplacementFound_(
+      answers,
+      proposedReplacement,
+      responseTimestamp
+    );
+
+    return;
+  }
+
+
+  if (
+    replacementStatus ===
+    'Still Awaiting Confirmation'
+  ) {
+
+    writeReplacementAwaiting_(
+      answers,
+      proposedReplacement
+    );
+
+    return;
+  }
+
+  throw new Error(
+    'Unsupported initial replacement status: ' +
+    replacementStatus
   );
+}
 
-  const sheet = spreadsheet.getSheetByName(
-    'Assignments — Sync'
-  );
 
-  const assignmentIds = sheet
-    .getRange(2, 1, sheet.getLastRow() - 1, 1)
-    .getValues()
-    .flat()
-    .map(value => String(value).trim());
+function writeReplacementAwaiting_(
+  answers,
+  proposedReplacement
+) {
 
-  const index = assignmentIds.indexOf(assignmentId);
+  const assignmentId =
+    String(
+      answers[
+        'Assignment ID'
+      ] || ''
+    ).trim();
 
-  if (index === -1) {
+  const record =
+    getAssignmentRecord_(
+      assignmentId
+    );
+
+  if (!record) {
+
     throw new Error(
       'Assignment ID not found during replacement write-back: ' +
       assignmentId
     );
   }
 
-  const rowNumber = index + 2;
+  if (
+    !proposedReplacement
+  ) {
 
-  // H = Confirmation
-  sheet.getRange(rowNumber, 8)
-    .setValue('Seeking Replacement');
+    throw new Error(
+      'Proposed replacement missing during replacement write-back'
+    );
+  }
 
-  // P = Proposed Replacement
-  sheet.getRange(rowNumber, 16)
-    .setValue(proposedReplacement);
+  record.sheet
+    .getRange(
+      record.rowNumber,
+      COL_CONFIRMATION
+    )
+    .setValue(
+      'Seeking Replacement'
+    );
+
+  record.sheet
+    .getRange(
+      record.rowNumber,
+      COL_PROPOSED_REPLACEMENT
+    )
+    .setValue(
+      proposedReplacement
+    );
+
+  record.sheet
+    .getRange(
+      record.rowNumber,
+      COL_CONFIRMED_AT
+    )
+    .clearContent();
+}
+
+
+function writeReplacementFound_(
+  answers,
+  confirmedReplacement,
+  responseTimestamp
+) {
+
+  const assignmentId =
+    String(
+      answers[
+        'Assignment ID'
+      ] || ''
+    ).trim();
+
+  const record =
+    getAssignmentRecord_(
+      assignmentId
+    );
+
+  if (!record) {
+    throw new Error(
+      'Assignment ID not found during replacement confirmation write-back: ' +
+      assignmentId
+    );
+  }
+
+  if (!confirmedReplacement) {
+    throw new Error(
+      'Confirmed replacement missing during write-back'
+    );
+  }
+
+
+  // ==========================================================
+  // 1. UPDATE ORIGINAL ASSIGNMENT
+  // ==========================================================
+
+  record.sheet
+    .getRange(
+      record.rowNumber,
+      COL_CONFIRMATION
+    )
+    .setValue(
+      'Replacement Found'
+    );
+
+  record.sheet
+    .getRange(
+      record.rowNumber,
+      COL_PROPOSED_REPLACEMENT
+    )
+    .setValue(
+      confirmedReplacement
+    );
+
+  record.sheet
+    .getRange(
+      record.rowNumber,
+      COL_CONFIRMED_AT
+    )
+    .setValue(
+      responseTimestamp
+    );
+
+
+  // ==========================================================
+  // 2. CREATE REPLACEMENT ASSIGNMENT
+  // ==========================================================
+
+  createReplacementAssignment_(
+    record,
+    confirmedReplacement,
+    responseTimestamp
+  );
+}
+
+
+function createReplacementAssignment_(
+  originalRecord,
+  replacementName,
+  responseTimestamp
+) {
+
+  const sheet =
+    originalRecord.sheet;
+
+  const original =
+    originalRecord.row;
+
+  const originalAssignmentId =
+    String(
+      original[0]
+    ).trim();
+
+  const sessionId =
+    String(
+      original[2] || ''
+    ).trim();
+
+  const role =
+    String(
+      original[5] || ''
+    ).trim();
+
+  const sourceSheet =
+    String(
+      original[11] || ''
+    ).trim();
+
+  const sourceCell =
+    String(
+      original[12] || ''
+    ).trim();
+
+
+  // ----------------------------------------------------------
+  // Prevent duplicate replacement assignments
+  // ----------------------------------------------------------
+
+  const lastRow =
+    sheet.getLastRow();
+
+  if (lastRow >= 2) {
+
+    const existingRows =
+      sheet
+        .getRange(
+          2,
+          1,
+          lastRow - 1,
+          16
+        )
+        .getValues();
+
+    const existingReplacement =
+      existingRows.find(row =>
+
+        String(
+          row[10] || ''
+        ).trim() ===
+          originalAssignmentId &&
+
+        String(
+          row[6] || ''
+        ).trim() ===
+          'Replacement' &&
+
+        String(
+          row[14] || ''
+        ).trim() ===
+          'Active'
+      );
+
+    if (existingReplacement) {
+      throw new Error(
+        'Active replacement assignment already exists for ' +
+        originalAssignmentId
+      );
+    }
+  }
+
+
+  // ----------------------------------------------------------
+  // Find replacement facilitator ID
+  // ----------------------------------------------------------
+
+  const replacementFacilitatorId =
+    findFacilitatorIdByName_(
+      replacementName
+    );
+
+
+  // ----------------------------------------------------------
+  // Generate ID and token
+  // ----------------------------------------------------------
+
+  const newAssignmentId =
+    generateNextAssignmentId_();
+
+  const newAssignmentToken =
+    Utilities.getUuid();
+
+
+  // ----------------------------------------------------------
+  // Find first available assignment row
+  // based on blank Assignment ID in column A
+  // ----------------------------------------------------------
+
+  const assignmentIds =
+    sheet
+      .getRange(
+        2,
+        COL_ASSIGNMENT_ID,
+        Math.max(
+          sheet.getMaxRows() - 1,
+          1
+        ),
+        1
+      )
+      .getValues();
+
+  let targetRow = null;
+
+  for (
+    let i = 0;
+    i < assignmentIds.length;
+    i++
+  ) {
+
+    if (
+      !String(
+        assignmentIds[i][0] || ''
+      ).trim()
+    ) {
+
+      targetRow =
+        i + 2;
+
+      break;
+    }
+  }
+
+  if (!targetRow) {
+
+    sheet.insertRowAfter(
+      sheet.getMaxRows()
+    );
+
+    targetRow =
+      sheet.getMaxRows();
+  }
+
+
+  // ----------------------------------------------------------
+  // Write A:D
+  // Column E deliberately untouched:
+  // array formula supplies Facilitator Name.
+  // ----------------------------------------------------------
+
+  sheet
+    .getRange(
+      targetRow,
+      1,
+      1,
+      4
+    )
+    .setValues([[
+      newAssignmentId,          // A Assignment ID
+      newAssignmentToken,       // B Assignment Token
+      sessionId,                // C Session ID
+      replacementFacilitatorId  // D Facilitator ID
+    ]]);
+
+
+  // ----------------------------------------------------------
+  // Write F:P
+  // ----------------------------------------------------------
+
+  sheet
+    .getRange(
+      targetRow,
+      6,
+      1,
+      11
+    )
+    .setValues([[
+      role,                     // F Role
+      'Replacement',            // G Assignment Type
+      'Confirmed',              // H Confirmation
+      '',                       // I Notification Sent
+      responseTimestamp,        // J Confirmed At
+      originalAssignmentId,     // K Replaces Assignment ID
+      sourceSheet,              // L Source Sheet
+      sourceCell,               // M Source Cell
+      '',                       // N Notes
+      'Active',                 // O Assignment State
+      ''                        // P Proposed Replacement
+    ]]);
+
+
+  SpreadsheetApp.flush();
+
+  Logger.log(
+    'Replacement assignment created: ' +
+    newAssignmentId +
+    ' in row ' +
+    targetRow
+  );
+}
+
+
+function findFacilitatorIdByName_(
+  facilitatorName
+) {
+
+  const sheet =
+    getAssignmentsSheet_();
+
+  const lastRow =
+    sheet.getLastRow();
+
+  if (lastRow < 2) {
+    throw new Error(
+      'No assignments available for facilitator ID lookup.'
+    );
+  }
+
+  const rows =
+    sheet
+      .getRange(
+        2,
+        1,
+        lastRow - 1,
+        5
+      )
+      .getValues();
+
+  const match =
+    rows.find(row =>
+      String(
+        row[4] || ''
+      ).trim() ===
+        facilitatorName &&
+      String(
+        row[3] || ''
+      ).trim()
+    );
+
+  if (!match) {
+    throw new Error(
+      'Facilitator ID not found for replacement: ' +
+      facilitatorName
+    );
+  }
+
+  return String(
+    match[3]
+  ).trim();
+}
+
+
+function generateNextAssignmentId_() {
+
+  const sheet =
+    getAssignmentsSheet_();
+
+  const lastRow =
+    sheet.getLastRow();
+
+  if (lastRow < 2) {
+    return 'BR-A-000001';
+  }
+
+  const ids =
+    sheet
+      .getRange(
+        2,
+        COL_ASSIGNMENT_ID,
+        lastRow - 1,
+        1
+      )
+      .getValues()
+      .flat()
+      .map(value =>
+        String(value).trim()
+      )
+      .filter(value =>
+        /^BR-A-\d+$/.test(value)
+      );
+
+  let highestNumber = 0;
+
+  ids.forEach(id => {
+
+    const number =
+      Number(
+        id.replace(
+          'BR-A-',
+          ''
+        )
+      );
+
+    if (number > highestNumber) {
+      highestNumber = number;
+    }
+  });
+
+  const nextNumber =
+    highestNumber + 1;
+
+  return (
+    'BR-A-' +
+    String(nextNumber)
+      .padStart(6, '0')
+  );
 }
