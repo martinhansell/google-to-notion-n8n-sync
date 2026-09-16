@@ -316,8 +316,8 @@ function validatePlanningRow_(rowNumber, date, location) {
     throw new Error('Date is required and must be valid.');
   }
 
-  if (!['Tuesday', 'Thursday', 'Singapore'].includes(location)) {
-    throw new Error(`Location is required; got "${location || 'blank'}".`);
+  if (!location) {
+    throw new Error('Location is required.');
   }
 }
 
