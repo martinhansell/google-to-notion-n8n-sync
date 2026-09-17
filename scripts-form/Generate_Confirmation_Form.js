@@ -409,8 +409,9 @@ function verifyConfirmationFormDesign_() {
 // ============================================================
 
 function getEligibleFacilitators_() {
-  const sheet = SpreadsheetApp.getActive()
-    .getSheetByName(FACILITATOR_LISTS_TAB);
+  const sheet = SpreadsheetApp
+  .openById('1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA')
+  .getSheetByName(FACILITATOR_LISTS_TAB);
 
   const lastRow = sheet.getLastRow();
   const lastColumn = sheet.getLastColumn();
