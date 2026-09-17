@@ -409,51 +409,22 @@ function verifyConfirmationFormDesign_() {
 // ============================================================
 
 function getEligibleFacilitators_() {
-  const spreadsheet = getRosterSpreadsheet_();
-
-  const sheet = spreadsheet.getSheetByName(
-    FACILITATOR_LISTS_TAB
-  );
-
-  if (!sheet) {
-    throw new Error(
-      'FacilitatorLists tab not found.'
-    );
-  }
+  const sheet = SpreadsheetApp.getActive()
+    .getSheetByName(FACILITATOR_LISTS_TAB);
 
   const lastRow = sheet.getLastRow();
+  const lastColumn = sheet.getLastColumn();
 
-  if (lastRow < 2) {
-    throw new Error(
-      'No facilitator names found.'
-    );
-  }
+  if (lastRow < 2 || lastColumn < 4) return [];
 
-  const names = sheet
-    .getRange(
-      2,
-      3,
-      lastRow - 1,
-      3
-    )
-    .getValues()
-    .flat()
-    .map(value =>
-      String(value).trim()
-    )
-    .filter(Boolean);
-
-  const uniqueNames = [
-    ...new Set(names)
-  ].sort();
-
-  if (uniqueNames.length === 0) {
-    throw new Error(
-      'No eligible facilitators found.'
-    );
-  }
-
-  return uniqueNames;
+  return [...new Set(
+    sheet
+      .getRange(2, 4, lastRow - 1, lastColumn - 3)
+      .getDisplayValues()
+      .flat()
+      .map(name => name.trim())
+      .filter(Boolean)
+  )].sort();
 }
 
 function updateReplacementFacilitatorDropdowns() {
