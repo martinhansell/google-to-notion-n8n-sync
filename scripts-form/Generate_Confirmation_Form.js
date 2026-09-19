@@ -153,10 +153,6 @@ function rebuildAssignmentConfirmationForm() {
     .setTitle('Location')
     .setRequired(true);
 
-    const locationRouterItem = form.addMultipleChoiceItem()
-    .setTitle('Location Router')
-    .setRequired(true);
-
   form.addTextItem()
     .setTitle('Reading Unit / Session')
     .setRequired(true);
@@ -203,27 +199,66 @@ function rebuildAssignmentConfirmationForm() {
     FormApp.PageNavigationType.SUBMIT
   );
 
+// ----------------------------------------------------------
+// LOCATION ROUTER
+// ----------------------------------------------------------
 
-  // ----------------------------------------------------------
-  // SECTION 4 — INITIAL REPLACEMENT PROPOSAL
-  // ----------------------------------------------------------
+const locationRouterSection = form.addPageBreakItem()
+  .setTitle('Replacement Location');
 
-  const initialReplacementSection = form.addPageBreakItem()
-    .setTitle('Replacement Proposal')
+const locationRouterItem = form.addMultipleChoiceItem()
+  .setTitle('Location Router')
+  .setRequired(true);
+
+// ----------------------------------------------------------
+// SECTION 4 — LOCATION-SPECIFIC REPLACEMENT PROPOSALS
+// ----------------------------------------------------------
+
+const replacementSections = {};
+
+activeLocations.forEach(location => {
+
+  const eligibleFacilitators =
+    getEligibleFacilitators_(location);
+
+  const section = form.addPageBreakItem()
+    .setTitle('Replacement Proposal — ' + location)
     .setHelpText(
       'Select the facilitator you are approaching and record the current status.'
     );
 
-  form.addListItem()
-    .setTitle('Who are you approaching?')
-    .setChoiceValues(
-      getEligibleFacilitators_()
-    )
+  const facilitatorItem = form.addListItem()
+    .setTitle('Who are you approaching? — ' + location)
     .setRequired(true);
 
-  const initialReplacementStatus = form.addMultipleChoiceItem()
-    .setTitle('Initial Replacement Status')
+  if (eligibleFacilitators.length > 0) {
+    facilitatorItem.setChoiceValues(
+      eligibleFacilitators
+    );
+  }
+
+  const statusItem = form.addMultipleChoiceItem()
+    .setTitle('Initial Replacement Status — ' + location)
     .setRequired(true);
+
+  replacementSections[location] = {
+    section: section,
+    statusItem: statusItem
+  };
+
+});
+
+// NOW THE DESTINATION SECTIONS EXIST,
+// SO BUILD THE ROUTER CHOICES
+
+locationRouterItem.setChoices(
+  activeLocations.map(location =>
+    locationRouterItem.createChoice(
+      location,
+      replacementSections[location].section
+    )
+  )
+);
 
 
   // ----------------------------------------------------------
@@ -294,29 +329,33 @@ function rebuildAssignmentConfirmationForm() {
     ),
     initialActionItem.createChoice(
       'Seeking Replacement',
-      initialReplacementSection
+      locationRouterSection
     )
   ]);
 
 
   // ----------------------------------------------------------
-  // ROUTING: SECTION 4
-  // ----------------------------------------------------------
+// ROUTING: LOCATION-SPECIFIC REPLACEMENT SECTIONS
+// ----------------------------------------------------------
 
-  initialReplacementStatus.setChoices([
-    initialReplacementStatus.createChoice(
+Object.values(replacementSections).forEach(({ section, statusItem }) => {
+
+  statusItem.setChoices([
+    statusItem.createChoice(
       'Replacement Confirmed',
       FormApp.PageNavigationType.SUBMIT
     ),
-    initialReplacementStatus.createChoice(
+    statusItem.createChoice(
       'Still Awaiting Confirmation',
       FormApp.PageNavigationType.SUBMIT
     )
   ]);
 
-  initialReplacementSection.setGoToPage(
+  section.setGoToPage(
     FormApp.PageNavigationType.SUBMIT
   );
+
+});
 
 
   // ----------------------------------------------------------
@@ -367,21 +406,29 @@ function rebuildAssignmentConfirmationForm() {
 }
 
 function verifyConfirmationFormDesign_() {
-  const form = FormApp.getActiveForm();
 
-  const requiredSections = [
-    'Your Response',
-    'Confirm Facilitation',
-    'Replacement Proposal',
-    'Replacement Follow-Up',
-    'Select New Replacement'
-  ];
+  const form = FormApp.getActiveForm();
+  const activeLocations = getActiveLocations_();
 
   const actualSections = form
     .getItems(FormApp.ItemType.PAGE_BREAK)
     .map(item =>
       item.asPageBreakItem().getTitle()
     );
+
+  const requiredSections = [
+    'Your Response',
+    'Confirm Facilitation',
+    'Replacement Location',
+    'Replacement Follow-Up',
+    'Select New Replacement'
+  ];
+
+  activeLocations.forEach(location => {
+    requiredSections.push(
+      'Replacement Proposal — ' + location
+    );
+  });
 
   requiredSections.forEach(title => {
     if (!actualSections.includes(title)) {
@@ -395,20 +442,24 @@ function verifyConfirmationFormDesign_() {
 
   const questionTitles = form
     .getItems()
-    .map(item =>
-      item.getTitle()
-    );
+    .map(item => item.getTitle());
 
   const requiredQuestions = [
     'Response Stage',
     'What would you like to do?',
-    'Who are you approaching?',
-    'Initial Replacement Status',
+    'Location Router',
     'Current Proposed Replacement',
     'Replacement Follow-Up Status',
     'New Proposed Replacement',
     'New Replacement Status'
   ];
+
+  activeLocations.forEach(location => {
+    requiredQuestions.push(
+      'Who are you approaching? — ' + location,
+      'Initial Replacement Status — ' + location
+    );
+  });
 
   requiredQuestions.forEach(title => {
     if (!questionTitles.includes(title)) {
@@ -421,7 +472,7 @@ function verifyConfirmationFormDesign_() {
   });
 
   Logger.log(
-    'FORM DESIGN CHECK: all required sections and questions present.'
+    'FORM DESIGN CHECK: all dynamic location sections and questions present.'
   );
 }
 
@@ -1078,18 +1129,26 @@ function handleConfirmationSubmission(e) {
   const answers = {};
 
   response
-    .getItemResponses()
-    .forEach(itemResponse => {
+  .getItemResponses()
+  .forEach(itemResponse => {
 
-      answers[
-        itemResponse
-          .getItem()
-          .getTitle()
-      ] =
-        itemResponse
-          .getResponse();
+    let title =
+      itemResponse
+        .getItem()
+        .getTitle();
 
-    });
+    if (title.startsWith('Who are you approaching? — ')) {
+      title = 'Who are you approaching?';
+    }
+
+    if (title.startsWith('Initial Replacement Status — ')) {
+      title = 'Initial Replacement Status';
+    }
+
+    answers[title] =
+      itemResponse.getResponse();
+
+  });
 
   const validation =
     validateConfirmationSubmission_(
