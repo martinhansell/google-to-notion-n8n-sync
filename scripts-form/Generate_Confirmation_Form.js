@@ -153,6 +153,10 @@ function rebuildAssignmentConfirmationForm() {
     .setTitle('Location')
     .setRequired(true);
 
+    const locationRouterItem = form.addMultipleChoiceItem()
+    .setTitle('Location Router')
+    .setRequired(true);
+
   form.addTextItem()
     .setTitle('Reading Unit / Session')
     .setRequired(true);
@@ -663,6 +667,19 @@ function buildPrefilledConfirmationUrl_(form, data) {
       data.responseStage
     )
   );
+
+  const locationRouterItem = form
+  .getItems(FormApp.ItemType.MULTIPLE_CHOICE)
+  .map(item => item.asMultipleChoiceItem())
+  .find(item => item.getTitle() === 'Location Router');
+
+if (!locationRouterItem) {
+  throw new Error('Location Router question not found.');
+}
+
+response.withItemResponse(
+  locationRouterItem.createResponse(data.location)
+);
 
   return response.toPrefilledUrl();
 }
