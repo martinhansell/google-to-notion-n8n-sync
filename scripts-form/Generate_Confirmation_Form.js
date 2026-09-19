@@ -86,6 +86,22 @@ function clearFormBranching_(form) {
     });
 }
 
+function getActiveLocations_() {
+  const sheet = SpreadsheetApp
+    .openById(ROSTER_SPREADSHEET_ID)
+    .getSheetByName(FACILITATOR_LISTS_TAB);
+
+  const lastColumn = sheet.getLastColumn();
+
+  if (lastColumn < 4) return [];
+
+  return sheet
+    .getRange(1, 4, 1, lastColumn - 3)
+    .getDisplayValues()[0]
+    .map(location => location.trim())
+    .filter(Boolean);
+}
+
 function rebuildAssignmentConfirmationForm() {
   const form = FormApp.getActiveForm();
 
