@@ -430,24 +430,32 @@ function verifyConfirmationFormDesign_() {
 // 3. FACILITATOR DROPDOWNS
 // ============================================================
 
-function getEligibleFacilitators_() {
+function getEligibleFacilitators_(location) {
   const sheet = SpreadsheetApp
-  .openById('1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA')
-  .getSheetByName(FACILITATOR_LISTS_TAB);
+    .openById(ROSTER_SPREADSHEET_ID)
+    .getSheetByName(FACILITATOR_LISTS_TAB);
 
   const lastRow = sheet.getLastRow();
   const lastColumn = sheet.getLastColumn();
 
-  if (lastRow < 2 || lastColumn < 4) return [];
+  if (lastRow < 2 || lastColumn < 4 || !location) return [];
 
-  return [...new Set(
-    sheet
-      .getRange(2, 4, lastRow - 1, lastColumn - 3)
-      .getDisplayValues()
-      .flat()
-      .map(name => name.trim())
-      .filter(Boolean)
-  )].sort();
+  const headers = sheet
+    .getRange(1, 4, 1, lastColumn - 3)
+    .getDisplayValues()[0];
+
+  const locationIndex = headers.findIndex(
+    header => header.trim() === location.trim()
+  );
+
+  if (locationIndex === -1) return [];
+
+  return sheet
+    .getRange(2, 4 + locationIndex, lastRow - 1, 1)
+    .getDisplayValues()
+    .flat()
+    .map(name => name.trim())
+    .filter(Boolean);
 }
 
 function updateReplacementFacilitatorDropdowns() {
