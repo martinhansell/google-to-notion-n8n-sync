@@ -123,6 +123,8 @@ function rebuildAssignmentConfirmationForm() {
     'Thank you. Your response has been recorded and will be validated against the current facilitation record.'
   );
 
+  const activeLocations = getActiveLocations_();
+
 
   // ----------------------------------------------------------
   // SECTION 1 — FACILITATION DETAILS / ROUTER
