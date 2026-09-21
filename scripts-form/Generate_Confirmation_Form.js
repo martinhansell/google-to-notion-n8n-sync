@@ -2,7 +2,7 @@
     // ASSIGNMENT CONFIRMATION FORM — CONSOLIDATED PROTOTYPE
     // ============================================================
 
-    const ROSTER_SPREADSHEET_ID = '1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA';
+    const ROSTER_SPREADSHEET_ID = '1Afl3KTlYK8ltL3gqgR33R-Ab6diiPdbDLIPWuw1BsOA';
     const ASSIGNMENTS_SYNC_TAB = 'Assignments — Sync';
     const SESSIONS_SYNC_TAB = 'Sessions — Sync';
     const FACILITATOR_LISTS_TAB = 'FacilitatorLists';
@@ -824,7 +824,7 @@
         )
         .getValues();
 
-        const TEST_ASSIGNMENT_ID = 'BR-A-000007';
+        const TEST_ASSIGNMENT_ID = 'BR-A-000230';
 
         const assignment =
           rows.find(row =>
