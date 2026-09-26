@@ -65,6 +65,10 @@
       };
     }
 
+    function verifyConfirmationFormDesign() {
+      verifyConfirmationFormDesign_();
+    }
+
 
     // ============================================================
     // 2. FORM BUILD / REBUILD
@@ -186,20 +190,6 @@
         .setTitle('What would you like to do?')
         .setRequired(true);
 
-
-      // ----------------------------------------------------------
-      // SECTION 3 — CONFIRM
-      // ----------------------------------------------------------
-
-      const confirmSection = form.addPageBreakItem()
-        .setTitle('Confirm Facilitation')
-        .setHelpText(
-          'Submit this form to confirm that you will fulfil this facilitation.'
-        );
-
-      confirmSection.setGoToPage(
-        FormApp.PageNavigationType.SUBMIT
-      );
 
     // ----------------------------------------------------------
     // LOCATION ROUTER
@@ -369,7 +359,7 @@
       initialActionItem.setChoices([
         initialActionItem.createChoice(
           'Confirm',
-          confirmSection
+          FormApp.PageNavigationType.SUBMIT
         ),
         initialActionItem.createChoice(
           'Seeking Replacement',
@@ -446,6 +436,18 @@
       }
     );
 
+    Object.values(replacementSections).forEach(({ section }) => {
+      section.setGoToPage(
+        FormApp.PageNavigationType.SUBMIT
+      );
+    });
+
+    Object.values(changeReplacementSections).forEach(({ section }) => {
+      section.setGoToPage(
+        FormApp.PageNavigationType.SUBMIT
+      );
+    });
+
       verifyConfirmationFormDesign_();
 
       Logger.log(
@@ -457,28 +459,27 @@
 
       const form = FormApp.getActiveForm();
       const activeLocations = getActiveLocations_();
-
+    
       const actualSections = form
         .getItems(FormApp.ItemType.PAGE_BREAK)
         .map(item =>
           item.asPageBreakItem().getTitle()
         );
-
+    
       const requiredSections = [
         'Your Response',
-        'Confirm Facilitation',
         'Replacement Location',
         'Replacement Follow-Up',
         'Change Replacement Location'
       ];
-
+    
       activeLocations.forEach(location => {
         requiredSections.push(
           'Replacement Proposal — ' + location,
           'Select New Replacement — ' + location
         );
       });
-
+    
       requiredSections.forEach(title => {
         if (!actualSections.includes(title)) {
           throw new Error(
@@ -488,11 +489,11 @@
           );
         }
       });
-
+    
       const questionTitles = form
         .getItems()
         .map(item => item.getTitle());
-
+    
       const requiredQuestions = [
         'Response Stage',
         'What would you like to do?',
@@ -501,7 +502,7 @@
         'Replacement Follow-Up Status',
         'Change Replacement Location — do not change'
       ];
-
+    
       activeLocations.forEach(location => {
         requiredQuestions.push(
           'Who are you approaching? — ' + location,
@@ -510,7 +511,7 @@
           'New Replacement Status — ' + location
         );
       });
-
+    
       requiredQuestions.forEach(title => {
         if (!questionTitles.includes(title)) {
           throw new Error(
@@ -520,9 +521,166 @@
           );
         }
       });
-
+    
+      verifyConfirmationFormRouting_();
+    
       Logger.log(
-        'FORM DESIGN CHECK: all dynamic location sections and questions present.'
+        'FORM DESIGN CHECK: structure and routing verified.'
+      );
+    }
+    
+    
+    function verifyConfirmationFormRouting_() {
+    
+      const form = FormApp.getActiveForm();
+    
+      const sections = form
+        .getItems(FormApp.ItemType.PAGE_BREAK)
+        .map(item => item.asPageBreakItem());
+    
+      const getSection_ = title => {
+    
+        const section = sections.find(
+          item => item.getTitle() === title
+        );
+    
+        if (!section) {
+          throw new Error(
+            'Form routing verification failed: missing section "' +
+            title +
+            '".'
+          );
+        }
+    
+        return section;
+      };
+    
+      const assertSubmitSection_ = title => {
+    
+        const section = getSection_(title);
+    
+        if (
+          section.getPageNavigationType() !==
+          FormApp.PageNavigationType.SUBMIT
+        ) {
+          throw new Error(
+            'Form routing verification failed: section "' +
+            title +
+            '" does not submit.'
+          );
+        }
+      };
+    
+      const multipleChoiceItems = form
+        .getItems(FormApp.ItemType.MULTIPLE_CHOICE)
+        .map(item => item.asMultipleChoiceItem());
+    
+      const assertChoiceSubmit_ = (
+        questionTitle,
+        choiceValue
+      ) => {
+    
+        const question =
+          multipleChoiceItems.find(
+            item =>
+              item.getTitle() === questionTitle
+          );
+    
+        if (!question) {
+          throw new Error(
+            'Form routing verification failed: missing question "' +
+            questionTitle +
+            '".'
+          );
+        }
+    
+        const choice =
+          question
+            .getChoices()
+            .find(
+              item =>
+                item.getValue() === choiceValue
+            );
+    
+        if (!choice) {
+          throw new Error(
+            'Form routing verification failed: missing choice "' +
+            choiceValue +
+            '" in "' +
+            questionTitle +
+            '".'
+          );
+        }
+    
+        if (
+          choice.getPageNavigationType() !==
+          FormApp.PageNavigationType.SUBMIT
+        ) {
+          throw new Error(
+            'Form routing verification failed: "' +
+            questionTitle +
+            '" → "' +
+            choiceValue +
+            '" does not submit.'
+          );
+        }
+      };
+    
+    
+      // Confirm now submits directly from Section 2.
+      assertChoiceSubmit_(
+        'What would you like to do?',
+        'Confirm'
+      );
+    
+    
+      // Initial replacement and changed-replacement
+      // location sections must terminate.
+      getActiveLocations_().forEach(location => {
+    
+        assertSubmitSection_(
+          'Replacement Proposal — ' + location
+        );
+    
+        assertSubmitSection_(
+          'Select New Replacement — ' + location
+        );
+    
+        assertChoiceSubmit_(
+          'Initial Replacement Status — ' + location,
+          'Replacement Confirmed'
+        );
+    
+        assertChoiceSubmit_(
+          'Initial Replacement Status — ' + location,
+          'Still Awaiting Confirmation'
+        );
+    
+        assertChoiceSubmit_(
+          'New Replacement Status — ' + location,
+          'Replacement Confirmed'
+        );
+    
+        assertChoiceSubmit_(
+          'New Replacement Status — ' + location,
+          'Still Awaiting Confirmation'
+        );
+      });
+    
+    
+      assertChoiceSubmit_(
+        'Replacement Follow-Up Status',
+        'Replacement Confirmed'
+      );
+    
+      assertChoiceSubmit_(
+        'Replacement Follow-Up Status',
+        'Still Awaiting Confirmation'
+      );
+    
+    
+      Logger.log(
+        'FORM ROUTING CHECK: all terminal routes submit correctly.'
       );
     }
 
@@ -2355,108 +2513,148 @@
     }
 
 
-    function findFacilitatorIdByName_(
-      facilitatorName
-    ) {
+    function findFacilitatorIdByName_(facilitatorName) {
 
+      const spreadsheet =
+        getRosterSpreadsheet_();
+    
       const sheet =
-        getAssignmentsSheet_();
-
-      const lastRow =
-        sheet.getLastRow();
-
-      if (lastRow < 2) {
+        spreadsheet.getSheetByName('FacMaster');
+    
+      if (!sheet) {
         throw new Error(
-          'No assignments available for facilitator ID lookup.'
+          'FacMaster tab not found.'
         );
       }
-
+    
+      const lastRow =
+        sheet.getLastRow();
+    
+      if (lastRow < 2) {
+        throw new Error(
+          'No facilitator records found in FacMaster.'
+        );
+      }
+    
       const rows =
         sheet
           .getRange(
             2,
             1,
             lastRow - 1,
-            5
+            4
           )
-          .getValues();
-
+          .getDisplayValues();
+    
       const match =
         rows.find(row =>
-          String(
-            row[4] || ''
-          ).trim() ===
-            facilitatorName &&
-          String(
-            row[3] || ''
-          ).trim()
+          String(row[3] || '').trim() ===
+          String(facilitatorName || '').trim()
         );
-
+    
       if (!match) {
         throw new Error(
-          'Facilitator ID not found for replacement: ' +
+          'Facilitator ID not found in FacMaster for replacement: ' +
           facilitatorName
         );
       }
-
-      return String(
-        match[3]
-      ).trim();
+    
+      const facilitatorId =
+        String(match[0] || '').trim();
+    
+      if (!facilitatorId) {
+        throw new Error(
+          'Facilitator record has no External ID in FacMaster: ' +
+          facilitatorName
+        );
+      }
+    
+      return facilitatorId;
     }
 
 
     function generateNextAssignmentId_() {
 
-      const sheet =
-        getAssignmentsSheet_();
-
-      const lastRow =
-        sheet.getLastRow();
-
-      if (lastRow < 2) {
-        return 'BR-A-000001';
+      const spreadsheet =
+        getRosterSpreadsheet_();
+    
+      const admin =
+        spreadsheet.getSheetByName('SysAdmin');
+    
+      if (!admin) {
+        throw new Error(
+          'SysAdmin tab not found.'
+        );
       }
-
-      const ids =
-        sheet
+    
+      const lastRow =
+        admin.getLastRow();
+    
+      const values =
+        admin
           .getRange(
             2,
-            COL_ASSIGNMENT_ID,
-            lastRow - 1,
-            1
+            1,
+            Math.max(1, lastRow - 1),
+            6
           )
-          .getValues()
-          .flat()
-          .map(value =>
-            String(value).trim()
-          )
-          .filter(value =>
-            /^BR-A-\d+$/.test(value)
-          );
-
-      let highestNumber = 0;
-
-      ids.forEach(id => {
-
-        const number =
-          Number(
-            id.replace(
-              'BR-A-',
-              ''
-            )
-          );
-
-        if (number > highestNumber) {
-          highestNumber = number;
+          .getValues();
+    
+      for (let i = 0; i < values.length; i++) {
+    
+        const entityType =
+          String(
+            values[i][0] || ''
+          ).trim();
+    
+        if (entityType !== 'Assignment') {
+          continue;
         }
-      });
-
-      const nextNumber =
-        highestNumber + 1;
-
-      return (
-        'BR-A-' +
-        String(nextNumber)
-          .padStart(6, '0')
+    
+        const nextNumber =
+          Number(
+            values[i][3]
+          );
+    
+        if (
+          !Number.isInteger(nextNumber) ||
+          nextNumber < 1
+        ) {
+          throw new Error(
+            'Assignment allocator Next Number is invalid.'
+          );
+        }
+    
+        const assignmentId =
+          'BR-A-' +
+          String(nextNumber)
+            .padStart(6, '0');
+    
+        const row =
+          i + 2;
+    
+        admin
+          .getRange(
+            row,
+            4
+          )
+          .setValue(
+            nextNumber + 1
+          );
+    
+        admin
+          .getRange(
+            row,
+            5
+          )
+          .setValue(
+            assignmentId
+          );
+    
+        return assignmentId;
+      }
+    
+      throw new Error(
+        'Assignment allocator row not found in SysAdmin.'
       );
     }
