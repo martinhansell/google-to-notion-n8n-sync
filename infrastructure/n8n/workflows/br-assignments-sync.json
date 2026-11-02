@@ -1,0 +1,861 @@
+{
+  "updatedAt": "2026-09-28T15:53:21.737Z",
+  "createdAt": "2026-09-19T16:00:31.302Z",
+  "id": "rrHIxTUWRBhgMXEQ",
+  "name": "BR Assignments Sync",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        128,
+        0
+      ],
+      "id": "820b18cf-2a75-48d8-b94a-061c4d1974a8",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "2ecdfef9-a742-40a1-b33e-c47c580078a3",
+          "mode": "list",
+          "cachedResultName": "Journey Event Instances DB",
+          "cachedResultUrl": "https://app.notion.com/p/d2a6a7ec17484ab4a77beb9fa2d4d6c6"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        544,
+        192
+      ],
+      "id": "840534a9-b36b-40d0-a8b8-12e13690a651",
+      "name": "Event Instances DB",
+      "credentials": {
+        "notionApi": {
+          "id": "MmgoekamXUObs774",
+          "name": "Notion Theologenius"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "1b0b87c7-3e35-4398-a2b1-b3ef1b872b62",
+          "mode": "list",
+          "cachedResultName": "Facilitation Assignments",
+          "cachedResultUrl": "https://app.notion.com/p/90476d3443a84425a6fbbf75fc1c65a0"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        544,
+        0
+      ],
+      "id": "07962bcf-5331-4155-b98e-b687447d0c70",
+      "name": "Facilitation Assignments DB",
+      "credentials": {
+        "notionApi": {
+          "id": "MmgoekamXUObs774",
+          "name": "Notion Theologenius"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "3aac267d-550f-80ad-abbd-000b568a4369",
+          "mode": "list",
+          "cachedResultName": "Team Members",
+          "cachedResultUrl": "https://app.notion.com/p/3aac267d550f8013b3ecc5eaf6bbb6be"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        544,
+        -384
+      ],
+      "id": "f40886a7-c2df-4e07-a39a-012f9aad137f",
+      "name": "Team Members DB",
+      "credentials": {
+        "notionApi": {
+          "id": "MmgoekamXUObs774",
+          "name": "Notion Theologenius"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "Assignment ID",
+              "field2": "property_assignment_external_id"
+            }
+          ]
+        },
+        "joinMode": "keepNonMatches",
+        "outputDataFrom": "input1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        832,
+        -384
+      ],
+      "id": "10807d92-74b5-4265-ad7e-40adb76a20b4",
+      "name": "Google-only detector"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "1b0b87c7-3e35-4398-a2b1-b3ef1b872b62",
+          "mode": "list",
+          "cachedResultName": "Facilitation Assignments",
+          "cachedResultUrl": "https://app.notion.com/p/90476d3443a84425a6fbbf75fc1c65a0"
+        },
+        "title": "={{ $json[\"Assignment ID\"] + \" · \" + $json[\"Facilitator Name\"] + \" · \" + $json[\"Role\"] + \" · \" + $json[\"Session ID\"] }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Assignment External ID|rich_text",
+              "textContent": "={{ $json[\"Assignment ID\"] }}"
+            },
+            {
+              "key": "Assignment State|select",
+              "selectValue": "={{ $json[\"Assignment State\"] }}"
+            },
+            {
+              "key": "Assignment Type|select",
+              "selectValue": "={{ $json[\"Assignment Type\"] }}"
+            },
+            {
+              "key": "Role|select",
+              "selectValue": "={{ $json[\"Role\"] }}"
+            },
+            {
+              "key": "Confirmation|select",
+              "selectValue": "={{ $json[\"Confirmation\"] }}"
+            },
+            {
+              "key": "Replaces Assignment ID|rich_text",
+              "textContent": "={{ $json[\"Replaces Assignment ID\"] }}"
+            },
+            {
+              "key": "Confirmed At|date",
+              "range": "={{ $json[\"Confirmed At\"] }}"
+            },
+            {
+              "key": "Notes|rich_text",
+              "textContent": "={{ $json[\"Notes\"] }}"
+            },
+            {
+              "key": "Notification Sent|date",
+              "range": "={{ $json[\"Notification Sent\"] }}"
+            },
+            {
+              "key": "Event Instance|relation",
+              "relationValue": [
+                "={{ $json[\"Event Instance Notion ID\"] }}"
+              ]
+            },
+            {
+              "key": "Facilitator|relation",
+              "relationValue": [
+                "={{ $json[\"Facilitator Notion ID\"] }}"
+              ]
+            }
+          ]
+        },
+        "contentType": "",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1536,
+        -80
+      ],
+      "id": "a4e4b68c-a7cb-496c-a16d-1fccce81dc53",
+      "name": "Create Facilitation Assignment",
+      "credentials": {
+        "notionApi": {
+          "id": "MmgoekamXUObs774",
+          "name": "Notion Theologenius"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "Assignment ID",
+              "field2": "property_assignment_external_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        832,
+        -16
+      ],
+      "id": "0f47e0bd-ed44-456f-ab6a-901782954b45",
+      "name": "Shared Assignment Matcher"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "property_event_instance[0]",
+              "field2": "id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        832,
+        176
+      ],
+      "id": "50ea8ab4-bfe4-40e7-af03-401e5ac90552",
+      "name": "Session Relation Resolver"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "property_facilitator",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        256
+      ],
+      "id": "e9314557-5c30-4dbc-b7ea-7dedcbec8950",
+      "name": "Expand Facilitator Relations"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "property_facilitator",
+              "field2": "id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        832,
+        -544
+      ],
+      "id": "9095389e-86d6-43d1-a534-ff44c4d04297",
+      "name": "Facilitator Relation Resolver"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7947d2eb-c34f-4bab-bb73-7c0ac4f4f039",
+              "leftValue": "={{ $json['Assignment Type'] }}",
+              "rightValue": "={{ $json.property_assignment_type }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "1265e7fe-1ece-4530-94ba-d8818ec9c21c",
+              "leftValue": "={{ $json.Role }}",
+              "rightValue": "={{ $json.property_role }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "dc491c01-2b2f-4bb9-8300-d05fa8c3b236",
+              "leftValue": "={{ $json.Confirmation }}",
+              "rightValue": "={{ $json.property_confirmation }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "44b24dc8-ee33-4a14-80a1-05ae3865038e",
+              "leftValue": "={{ $json['Assignment State'] }}",
+              "rightValue": "={{ $json.property_assignment_state }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "9899ceb8-2219-41b6-8ea4-78caf0fb559a",
+              "leftValue": "={{ $json['Replaces Assignment ID'] }}",
+              "rightValue": "={{ $json.property_replaces_assignment_id }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "f23311c6-b7a5-4e08-b979-54cd11422395",
+              "leftValue": "={{ $json['Session ID'] }}",
+              "rightValue": "={{ $json.property_session_external_id }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1760,
+        176
+      ],
+      "id": "38358fa7-536a-414a-a2dc-4282f4bde6b9",
+      "name": "Session Relation Validator"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "df40a848-4bd9-4948-b59a-c6f9ffc3c40c",
+              "leftValue": "={{ $json['Facilitator ID'] }}",
+              "rightValue": "={{ $json.property_facilitator_external_id }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1728,
+        -416
+      ],
+      "id": "06949ef0-4372-4a4e-aa7c-1d7a026c3d11",
+      "name": "Facilitator Relation Validator"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "Session ID",
+              "field2": "property_session_external_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1072,
+        -240
+      ],
+      "id": "f545b62a-463a-4611-a331-22514f001a3c",
+      "name": "Create: Resolve Event Instance"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4598ef66-e05f-47c2-a842-0d37aa7e243a",
+              "name": "Event Instance Notion ID",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1296,
+        -112
+      ],
+      "id": "36369839-54f6-4c67-9cca-68a791ce20a2",
+      "name": "Store Event Instance ID"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "Facilitator ID",
+              "field2": "property_facilitator_external_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1280,
+        -400
+      ],
+      "id": "e8799817-8761-48ae-9625-0d8ce935490e",
+      "name": "Create: Resolve Facilitator"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a6e0b7e0-1428-4023-9a1d-982ac2c75bdd",
+              "name": "Facilitator Notion ID",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1520,
+        -320
+      ],
+      "id": "bd58b83a-d8d5-4a3a-91fc-c99ea24418ea",
+      "name": "Store Facilitator ID"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "property_assignment_external_id",
+              "field2": "Assignment ID"
+            }
+          ]
+        },
+        "joinMode": "keepNonMatches",
+        "outputDataFrom": "input1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        832,
+        -192
+      ],
+      "id": "b9791c44-7863-4459-ab06-a6ac86c8c805",
+      "name": "Notion-only detector"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "13337a98-c7fa-4111-85a6-fe20fd9530cb",
+              "leftValue": "={{ $json[\"property_assignment_external_id\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1072,
+        64
+      ],
+      "id": "78222874-4dda-49be-a137-9e74a822a898",
+      "name": "Sync-elibigible Assignment filter"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Afl3KTlYK8ltL3gqgR33R-Ab6diiPdbDLIPWuw1BsOA",
+          "mode": "list",
+          "cachedResultName": "Bible Facilitation Roster",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Afl3KTlYK8ltL3gqgR33R-Ab6diiPdbDLIPWuw1BsOA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1604752101,
+          "mode": "list",
+          "cachedResultName": "Assignments — Sync",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Afl3KTlYK8ltL3gqgR33R-Ab6diiPdbDLIPWuw1BsOA/edit#gid=1604752101"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        544,
+        -192
+      ],
+      "id": "6e56b987-5acd-4bc4-9cb5-304bcc71685e",
+      "name": "LIVE Bible Facilitation Roster",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YqyZKJ3DcH6BmSqN",
+          "name": "GoogleAuth"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "LIVE Bible Facilitation Roster",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Event Instances DB",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Team Members DB",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facilitation Assignments DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Event Instances DB": {
+      "main": [
+        [
+          {
+            "node": "Session Relation Resolver",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Create: Resolve Event Instance",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Facilitation Assignments DB": {
+      "main": [
+        [
+          {
+            "node": "Shared Assignment Matcher",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Google-only detector",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Notion-only detector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Team Members DB": {
+      "main": [
+        [
+          {
+            "node": "Facilitator Relation Resolver",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Create: Resolve Facilitator",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Google-only detector": {
+      "main": [
+        [
+          {
+            "node": "Create: Resolve Event Instance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Facilitation Assignment": {
+      "main": [
+        []
+      ]
+    },
+    "Shared Assignment Matcher": {
+      "main": [
+        [
+          {
+            "node": "Session Relation Resolver",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Session Relation Resolver": {
+      "main": [
+        [
+          {
+            "node": "Session Relation Validator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Expand Facilitator Relations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand Facilitator Relations": {
+      "main": [
+        [
+          {
+            "node": "Facilitator Relation Resolver",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facilitator Relation Resolver": {
+      "main": [
+        [
+          {
+            "node": "Facilitator Relation Validator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create: Resolve Event Instance": {
+      "main": [
+        [
+          {
+            "node": "Store Event Instance ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Event Instance ID": {
+      "main": [
+        [
+          {
+            "node": "Create: Resolve Facilitator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create: Resolve Facilitator": {
+      "main": [
+        [
+          {
+            "node": "Store Facilitator ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Facilitator ID": {
+      "main": [
+        [
+          {
+            "node": "Create Facilitation Assignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion-only detector": {
+      "main": [
+        [
+          {
+            "node": "Sync-elibigible Assignment filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LIVE Bible Facilitation Roster": {
+      "main": [
+        [
+          {
+            "node": "Shared Assignment Matcher",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google-only detector",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notion-only detector",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "c092eb9d-5ce1-43c8-880f-f9c7c2c1ad2d",
+  "activeVersionId": null,
+  "versionCounter": 339,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-09-19T16:00:31.308Z",
+      "createdAt": "2026-09-19T16:00:31.308Z",
+      "role": "workflow:owner",
+      "workflowId": "rrHIxTUWRBhgMXEQ",
+      "projectId": "wJeAoJfh8cvDEGgO",
+      "project": {
+        "updatedAt": "2026-07-29T12:14:07.286Z",
+        "createdAt": "2026-07-29T11:54:06.604Z",
+        "id": "wJeAoJfh8cvDEGgO",
+        "name": "Martin Hansell <martin.hansell@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "7a78d14d-4c03-4f2d-a274-56c598faf912"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

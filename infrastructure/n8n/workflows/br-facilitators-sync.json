@@ -1,0 +1,278 @@
+{
+  "updatedAt": "2026-09-16T15:23:28.751Z",
+  "createdAt": "2026-09-16T13:08:14.004Z",
+  "id": "89TcU4UP8ujck5lz",
+  "name": "BR Facilitators Sync",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        128,
+        0
+      ],
+      "id": "1c3b19cb-d4ca-4d27-a56a-9f3dc9df1bd0",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA",
+          "mode": "list",
+          "cachedResultName": "SAFE Copy of Bible Facilitation Roster@20260903",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1102015112,
+          "mode": "list",
+          "cachedResultName": "FacMaster",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit#gid=1102015112"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        400,
+        -96
+      ],
+      "id": "4c56202e-2436-49ce-9c88-374e6ffc8227",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YqyZKJ3DcH6BmSqN",
+          "name": "GoogleAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "3aac267d-550f-80ad-abbd-000b568a4369",
+          "mode": "list",
+          "cachedResultName": "Team Members",
+          "cachedResultUrl": "https://app.notion.com/p/3aac267d550f8013b3ecc5eaf6bbb6be"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        400,
+        80
+      ],
+      "id": "45666101-3516-4993-8276-d6a2d85b02fe",
+      "name": "Get many database pages",
+      "credentials": {
+        "notionApi": {
+          "id": "MmgoekamXUObs774",
+          "name": "Notion Theologenius"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "Facilitator External ID",
+              "field2": "property_facilitator_external_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        624,
+        -16
+      ],
+      "id": "efd1af76-db62-4d89-90d0-15c6a780599c",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7947d2eb-c34f-4bab-bb73-7c0ac4f4f039",
+              "leftValue": "={{ $json['Display Name'] }}",
+              "rightValue": "={{ $('Get many database pages').item.json.name }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "c62e8fa4-6337-4462-89b4-aaa491425d62",
+              "leftValue": "={{ $json['Active?'] }}",
+              "rightValue": "={{ $('Get many database pages').item.json.property_active }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "10872bd2-ae03-4048-bbc5-d71d2d23d13d",
+              "leftValue": "={{ $json['Facilitator Status'] }}",
+              "rightValue": "={{ $('Get many database pages').item.json.property_facilitator_status }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "723c3fe5-d901-4345-b4d9-6d07bf1f1ed3",
+              "leftValue": "={{ $json['Available From'] || \"\" }}",
+              "rightValue": "={{ $json.property_available_from.start || \"\" }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "c5704289-36d8-4bb8-96eb-fd26cbcbd49d",
+              "leftValue": "={{ $json[\"Available Until\"] || \"\" }}",
+              "rightValue": "={{ $json[\"property_available_until\"]?.start || \"\" }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "f102d5b9-489e-4a59-a285-664414a87ea8",
+              "leftValue": "={{ $json['Display Name'] }}",
+              "rightValue": "={{ $json.property_name }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        -16
+      ],
+      "id": "f0da38ea-c910-44a1-9e70-28a486ba37f4",
+      "name": "If"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get many database pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many database pages": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "e79d2fbe-6823-4934-8302-c580afb9e088",
+  "activeVersionId": null,
+  "versionCounter": 125,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-09-16T13:08:14.010Z",
+      "createdAt": "2026-09-16T13:08:14.010Z",
+      "role": "workflow:owner",
+      "workflowId": "89TcU4UP8ujck5lz",
+      "projectId": "wJeAoJfh8cvDEGgO",
+      "project": {
+        "updatedAt": "2026-07-29T12:14:07.286Z",
+        "createdAt": "2026-07-29T11:54:06.604Z",
+        "id": "wJeAoJfh8cvDEGgO",
+        "name": "Martin Hansell <martin.hansell@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "7a78d14d-4c03-4f2d-a274-56c598faf912"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}
