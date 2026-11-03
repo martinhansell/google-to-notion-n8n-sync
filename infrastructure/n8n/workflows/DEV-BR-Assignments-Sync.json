@@ -116,7 +116,8 @@
           "id": "MmgoekamXUObs774",
           "name": "Notion Theologenius"
         }
-      }
+      },
+      "disabled": true
     },
     {
       "parameters": {
@@ -276,7 +277,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1760,
+        1984,
         176
       ],
       "id": "38358fa7-536a-414a-a2dc-4282f4bde6b9",
@@ -309,8 +310,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1728,
-        -416
+        1936,
+        -544
       ],
       "id": "06949ef0-4372-4a4e-aa7c-1d7a026c3d11",
       "name": "Facilitator Relation Validator"
@@ -450,7 +451,7 @@
               "rightValue": "",
               "operator": {
                 "type": "string",
-                "operation": "notEmpty",
+                "operation": "empty",
                 "singleValue": true
               }
             }
@@ -587,6 +588,170 @@
           "name": "GoogleAuth"
         }
       }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        320
+      ],
+      "id": "929a1d3d-b70d-4be7-9be8-0e85e350b6aa",
+      "name": "TEST - Limit to 1 Ass"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst assignment = $input.first().json;\n\nconst facilitators = $(\"DEV — Team Members DB\").all()\n  .map(item => item.json);\n\nconst sessions = $(\"DEV — Event Instances DB\").all()\n  .map(item => item.json);\n\nconst facilitatorRef = assignment.property_facilitator?.[0];\nconst sessionRef = assignment.property_event_instance?.[0];\n\nconst facilitator = facilitators.find(\n  person => person.id === facilitatorRef\n);\n\nconst session = sessions.find(\n  event => event.id === sessionRef\n);\n\nif (!facilitator || !session) {\n  throw new Error(\n    \"Unable to resolve DEV facilitator or session relation\"\n  );\n}\n\nconst facilitatorId =\n  facilitator.property_facilitator_external_id;\n\nconst sessionId =\n  session.property_session_external_id;\n\nif (!/^BR-F-\\d{6}$/.test(facilitatorId) ||\n    !/^BR-S-\\d{6}$/.test(sessionId)) {\n  throw new Error(\"Missing or invalid portable ID\");\n}\n\n\nconst counterRows = $(\"DEV — Read Assignment ID Counter\").all();\n\nif (counterRows.length !== 1) {\n  throw new Error(\"Expected exactly one Assignment ID counter row\");\n}\n\nconst counter = counterRows[0].json;\n\nif (counter[\"Entity Type\"] !== \"Assignment\") {\n  throw new Error(\"Incorrect ID counter entity\");\n}\n\nconst nextNumber = Number(counter[\"Next Number\"]);\nconst width = Number(counter[\"Width\"]);\nconst prefix = counter[\"Prefix\"];\n\nif (!Number.isSafeInteger(nextNumber) || nextNumber < 1 ||\n    !Number.isSafeInteger(width) || width < 1 ||\n    prefix !== \"BR-A-\") {\n  throw new Error(\"Invalid Assignment ID counter configuration\");\n}\n\nconst proposedAssignmentId =\n  prefix + String(nextNumber).padStart(width, \"0\");\n\n\nconst googleRows = $(\"DEV VERSION Bible Facilitation Roster\")\n  .all()\n  .map(item => item.json);\n\n// Ignore blank rows, including the row containing\n// the existing facilitator-name formula.\nconst existingAssignments = googleRows.filter(\n  row => String(row[\"Assignment ID\"] ?? \"\").trim() !== \"\"\n);\n\n\nconst matchingNotionPage = existingAssignments.find(\n  row => String(row[\"Notion Assignment Page ID\"] ?? \"\")\n    .replace(/-/g, \"\").toLowerCase() ===\n    String(assignment.id).replace(/-/g, \"\").toLowerCase()\n);\n\n\nconst existingAssignmentId = matchingNotionPage\n  ? String(matchingNotionPage[\"Assignment ID\"]).trim()\n  : null;\n\n\nconst duplicate = existingAssignments.find(\n  row => String(row[\"Assignment ID\"]).trim() === proposedAssignmentId\n);\n\nif (duplicate) {\n  throw new Error(\n    `Assignment ID ${proposedAssignmentId} already exists in Google`\n  );\n}\n\nconst duplicateCheck = \"PASS — ID not found in Google\";\n\nreturn [{\n  json: {\n    notionAssignmentPageId: assignment.id,\n    facilitatorId,\n    sessionId,\n    role: assignment.property_role,\n    assignmentType: assignment.property_assignment_type,\n    confirmation: assignment.property_confirmation,\n    assignmentState: assignment.property_assignment_state,\n    facilitatorName: facilitator.name,\n    duplicateCheck,\n    proposedAssignmentId\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        464
+      ],
+      "id": "0365ade5-9be5-4465-9b01-b4bf98797fee",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1680,
+        256
+      ],
+      "id": "4c9a6af8-8520-4794-aa3e-a61f82f5fc28",
+      "name": "Merge Facilitators"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1680,
+        496
+      ],
+      "id": "2183bf8c-a386-4e04-a2e3-3ec921641bff",
+      "name": "Merge Sessions"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA",
+          "mode": "list",
+          "cachedResultName": "DEV VERSION Bible Facilitation Roster",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 369384666,
+          "mode": "list",
+          "cachedResultName": "SysAdmin",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit#gid=369384666"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Entity Type",
+              "lookupValue": "Assignment"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        544,
+        400
+      ],
+      "id": "219cc99d-3995-49d7-9661-07095d484240",
+      "name": "DEV — Read Assignment ID Counter",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YqyZKJ3DcH6BmSqN",
+          "name": "GoogleAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1680,
+        704
+      ],
+      "id": "873c11dc-e4f1-4a02-8215-8b720ac8335e",
+      "name": "Merge Ass Counter"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://script.googleapis.com/v1/scripts/AKfycbz8R7Z76MGfLkvpHW0i2SLL6mo6VU84A2PyUwNUXtRFfvDt-qYsWCQDoXNKwQywxN_H:run",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"function\": \"devWriteNotionAssignment\",\n  \"parameters\": [\n    {\n      \"notionAssignmentPageId\": \"{{ $json.notionAssignmentPageId }}\",\n      \"facilitatorId\": \"{{ $json.facilitatorId }}\",\n      \"sessionId\": \"{{ $json.sessionId }}\",\n      \"role\": \"{{ $json.role }}\",\n      \"assignmentType\": \"{{ $json.assignmentType }}\",\n      \"confirmation\": \"{{ $json.confirmation }}\",\n      \"assignmentState\": \"{{ $json.assignmentState }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2240,
+        464
+      ],
+      "id": "160a0ca8-c07f-4a45-9c84-dae43678b65b",
+      "name": "HTTP Request",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "TIj4kyclQ0s2hcoK",
+          "name": "Google Apps OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ \"https://www.notion.so/\" + $json.response.result.notionPageId.replace(/-/g, \"\") }}",
+          "mode": "url"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Assignment External ID|rich_text",
+              "textContent": "={{ $json.response.result.assignmentId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2448,
+        464
+      ],
+      "id": "4e166025-1a50-48b6-86a4-d5fb00c9c6d0",
+      "name": "DEV — Write Assignment ID to Notion",
+      "credentials": {
+        "notionApi": {
+          "id": "MmgoekamXUObs774",
+          "name": "Notion Theologenius"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -611,6 +776,11 @@
           },
           {
             "node": "DEV — Facilitation Assignments DB",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DEV — Read Assignment ID Counter",
             "type": "main",
             "index": 0
           }
@@ -770,6 +940,11 @@
             "node": "Create: Resolve Facilitator",
             "type": "main",
             "index": 1
+          },
+          {
+            "node": "Merge Facilitators",
+            "type": "main",
+            "index": 1
           }
         ]
       ]
@@ -784,6 +959,11 @@
           },
           {
             "node": "Create: Resolve Event Instance",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Merge Sessions",
             "type": "main",
             "index": 1
           }
@@ -810,6 +990,94 @@
           }
         ]
       ]
+    },
+    "Sync-elibigible Assignment filter": {
+      "main": [
+        [
+          {
+            "node": "TEST - Limit to 1 Ass",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TEST - Limit to 1 Ass": {
+      "main": [
+        [
+          {
+            "node": "Merge Facilitators",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Facilitators": {
+      "main": [
+        [
+          {
+            "node": "Merge Sessions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Sessions": {
+      "main": [
+        [
+          {
+            "node": "Merge Ass Counter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Read Assignment ID Counter": {
+      "main": [
+        [
+          {
+            "node": "Merge Ass Counter",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Ass Counter": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "DEV — Write Assignment ID to Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -818,7 +1086,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "b5ee4d89-49dc-46ee-ba2e-86a58df56fdd",
+  "versionId": "f6f5998a-7844-476b-a2bf-ae027914600c",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "a035d710f952601e58e2e394cc86b8497b51f348ba066183cfc9a59870092c9e"
