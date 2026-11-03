@@ -1,5 +1,5 @@
 {
-  "name": "DEV BR Assignments Sync",
+  "name": "DEV-BR-Assignments-Sync",
   "nodes": [
     {
       "parameters": {},
@@ -106,8 +106,8 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        1536,
-        -80
+        1680,
+        -128
       ],
       "id": "a4e4b68c-a7cb-496c-a16d-1fccce81dc53",
       "name": "Create Facilitation Assignment",
@@ -404,8 +404,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        1520,
-        -320
+        1664,
+        -400
       ],
       "id": "bd58b83a-d8d5-4a3a-91fc-c99ea24418ea",
       "name": "Store Facilitator ID"
@@ -590,25 +590,14 @@
       }
     },
     {
-      "parameters": {},
-      "type": "n8n-nodes-base.limit",
-      "typeVersion": 1,
-      "position": [
-        1392,
-        320
-      ],
-      "id": "929a1d3d-b70d-4be7-9be8-0e85e350b6aa",
-      "name": "TEST - Limit to 1 Ass"
-    },
-    {
       "parameters": {
-        "jsCode": "\nconst assignment = $input.first().json;\n\nconst facilitators = $(\"DEV — Team Members DB\").all()\n  .map(item => item.json);\n\nconst sessions = $(\"DEV — Event Instances DB\").all()\n  .map(item => item.json);\n\nconst facilitatorRef = assignment.property_facilitator?.[0];\nconst sessionRef = assignment.property_event_instance?.[0];\n\nconst facilitator = facilitators.find(\n  person => person.id === facilitatorRef\n);\n\nconst session = sessions.find(\n  event => event.id === sessionRef\n);\n\nif (!facilitator || !session) {\n  throw new Error(\n    \"Unable to resolve DEV facilitator or session relation\"\n  );\n}\n\nconst facilitatorId =\n  facilitator.property_facilitator_external_id;\n\nconst sessionId =\n  session.property_session_external_id;\n\nif (!/^BR-F-\\d{6}$/.test(facilitatorId) ||\n    !/^BR-S-\\d{6}$/.test(sessionId)) {\n  throw new Error(\"Missing or invalid portable ID\");\n}\n\n\nconst counterRows = $(\"DEV — Read Assignment ID Counter\").all();\n\nif (counterRows.length !== 1) {\n  throw new Error(\"Expected exactly one Assignment ID counter row\");\n}\n\nconst counter = counterRows[0].json;\n\nif (counter[\"Entity Type\"] !== \"Assignment\") {\n  throw new Error(\"Incorrect ID counter entity\");\n}\n\nconst nextNumber = Number(counter[\"Next Number\"]);\nconst width = Number(counter[\"Width\"]);\nconst prefix = counter[\"Prefix\"];\n\nif (!Number.isSafeInteger(nextNumber) || nextNumber < 1 ||\n    !Number.isSafeInteger(width) || width < 1 ||\n    prefix !== \"BR-A-\") {\n  throw new Error(\"Invalid Assignment ID counter configuration\");\n}\n\nconst proposedAssignmentId =\n  prefix + String(nextNumber).padStart(width, \"0\");\n\n\nconst googleRows = $(\"DEV VERSION Bible Facilitation Roster\")\n  .all()\n  .map(item => item.json);\n\n// Ignore blank rows, including the row containing\n// the existing facilitator-name formula.\nconst existingAssignments = googleRows.filter(\n  row => String(row[\"Assignment ID\"] ?? \"\").trim() !== \"\"\n);\n\n\nconst matchingNotionPage = existingAssignments.find(\n  row => String(row[\"Notion Assignment Page ID\"] ?? \"\")\n    .replace(/-/g, \"\").toLowerCase() ===\n    String(assignment.id).replace(/-/g, \"\").toLowerCase()\n);\n\n\nconst existingAssignmentId = matchingNotionPage\n  ? String(matchingNotionPage[\"Assignment ID\"]).trim()\n  : null;\n\n\nconst duplicate = existingAssignments.find(\n  row => String(row[\"Assignment ID\"]).trim() === proposedAssignmentId\n);\n\nif (duplicate) {\n  throw new Error(\n    `Assignment ID ${proposedAssignmentId} already exists in Google`\n  );\n}\n\nconst duplicateCheck = \"PASS — ID not found in Google\";\n\nreturn [{\n  json: {\n    notionAssignmentPageId: assignment.id,\n    facilitatorId,\n    sessionId,\n    role: assignment.property_role,\n    assignmentType: assignment.property_assignment_type,\n    confirmation: assignment.property_confirmation,\n    assignmentState: assignment.property_assignment_state,\n    facilitatorName: facilitator.name,\n    duplicateCheck,\n    proposedAssignmentId\n  }\n}];\n"
+        "jsCode": "\nconst assignments = $input.all().map(item => item.json);\n\nconst facilitators = $(\"DEV — Team Members DB\")\n  .all().map(item => item.json);\n\nconst sessions = $(\"DEV — Event Instances DB\")\n  .all().map(item => item.json);\n\nconst counterRows = $(\"DEV — Read Assignment ID Counter\").all();\n\nif (counterRows.length !== 1) {\n  throw new Error(\"Expected exactly one Assignment counter row\");\n}\n\nconst counter = counterRows[0].json;\n\nif (\n  counter[\"Entity Type\"] !== \"Assignment\" ||\n  counter[\"Prefix\"] !== \"BR-A-\" ||\n  Number(counter[\"Width\"]) !== 6 ||\n  !Number.isSafeInteger(Number(counter[\"Next Number\"])) ||\n  Number(counter[\"Next Number\"]) < 1\n) {\n  throw new Error(\"Invalid Assignment allocator configuration\");\n}\n\nconst roles = [\n  \"Lead / Announce\",\n  \"Newcomer Support\",\n  \"Facilitate\",\n  \"L-Plate\",\n  \"L-Plate Support\"\n];\n\nconst googleRows = $(\"DEV VERSION Bible Facilitation Roster\")\n  .all().map(item => item.json);\n\nconst norm = value =>\n  String(value ?? \"\").replace(/-/g, \"\").toLowerCase().trim();\n\nconst seen = new Set();\n\nreturn assignments.map(assignment => {\n  const pageId = assignment.id;\n\n  if (seen.has(norm(pageId))) {\n    throw new Error(`Duplicate Notion page in batch: ${pageId}`);\n  }\n  seen.add(norm(pageId));\n\n  const facilitator = facilitators.find(\n    person => person.id === assignment.property_facilitator?.[0]\n  );\n\n  const session = sessions.find(\n    event => event.id === assignment.property_event_instance?.[0]\n  );\n\n  if (!facilitator || !session) {\n    throw new Error(`Unresolved relation: ${pageId}`);\n  }\n\n  const facilitatorId = facilitator.property_facilitator_external_id;\n  const sessionId = session.property_session_external_id;\n\n  if (\n    !/^BR-F-\\d{6}$/.test(facilitatorId) ||\n    !/^BR-S-\\d{6}$/.test(sessionId)\n  ) {\n    throw new Error(`Invalid portable ID: ${pageId}`);\n  }\n\n  if (!roles.includes(assignment.property_role)) {\n    throw new Error(`Invalid role: ${pageId}`);\n  }\n\n  if (assignment.property_assignment_type !== \"Original\" ||\n      assignment.property_confirmation !== \"Not Requested\" ||\n      assignment.property_assignment_state !== \"Active\") {\n    throw new Error(`Unexpected assignment state: ${pageId}`);\n  }\n\n  const existing = googleRows.find(\n    row => norm(row[\"Notion Assignment Page ID\"]) === norm(pageId)\n  );\n\n  return {\n    json: {\n      notionAssignmentPageId: pageId,\n      facilitatorId,\n      sessionId,\n      role: assignment.property_role,\n      assignmentType: assignment.property_assignment_type,\n      confirmation: assignment.property_confirmation,\n      assignmentState: assignment.property_assignment_state,\n      existingGoogleAssignmentId: existing?.[\"Assignment ID\"] ?? null\n    }\n  };\n});\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         1984,
-        464
+        496
       ],
       "id": "0365ade5-9be5-4465-9b01-b4bf98797fee",
       "name": "Code in JavaScript"
@@ -707,8 +696,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2240,
-        464
+        2464,
+        496
       ],
       "id": "160a0ca8-c07f-4a45-9c84-dae43678b65b",
       "name": "HTTP Request",
@@ -741,8 +730,8 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        2448,
-        464
+        2336,
+        704
       ],
       "id": "4e166025-1a50-48b6-86a4-d5fb00c9c6d0",
       "name": "DEV — Write Assignment ID to Notion",
@@ -752,6 +741,33 @@
           "name": "Notion Theologenius"
         }
       }
+    },
+    {
+      "parameters": {
+        "maxItems": 100
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        320
+      ],
+      "id": "929a1d3d-b70d-4be7-9be8-0e85e350b6aa",
+      "name": "TEST - Limit to 1 Ass",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2224,
+        496
+      ],
+      "id": "0cb7db1c-9f46-4edd-9552-1ae6a58064fd",
+      "name": "Loop Over Items"
     }
   ],
   "pinData": {},
@@ -1002,17 +1018,6 @@
         ]
       ]
     },
-    "TEST - Limit to 1 Ass": {
-      "main": [
-        [
-          {
-            "node": "Merge Facilitators",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Merge Facilitators": {
       "main": [
         [
@@ -1061,7 +1066,7 @@
       "main": [
         [
           {
-            "node": "HTTP Request",
+            "node": "Loop Over Items",
             "type": "main",
             "index": 0
           }
@@ -1078,6 +1083,40 @@
           }
         ]
       ]
+    },
+    "TEST - Limit to 1 Ass": {
+      "main": [
+        [
+          {
+            "node": "Merge Facilitators",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Write Assignment ID to Notion": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -1086,7 +1125,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "f6f5998a-7844-476b-a2bf-ae027914600c",
+  "versionId": "5b5c89b3-65b0-4f54-adf8-29c6b3725d78",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "a035d710f952601e58e2e394cc86b8497b51f348ba066183cfc9a59870092c9e"
