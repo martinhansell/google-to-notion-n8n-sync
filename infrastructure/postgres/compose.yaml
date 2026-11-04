@@ -1,0 +1,32 @@
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: br-sync-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    volumes:
+      - br_sync_pgdata:/var/lib/postgresql/data
+
+    networks:
+      - br-sync-dev-net
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  br_sync_pgdata:
+
+networks:
+  br-sync-dev-net:
+    external: true
