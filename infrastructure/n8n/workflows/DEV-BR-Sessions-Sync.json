@@ -1,0 +1,228 @@
+{
+  "name": "DEV-BR-Sessions-Sync",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        128,
+        0
+      ],
+      "id": "e520dd3d-498f-4712-95b9-4c25957b3053",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "655cf0f3-93cd-4d72-920a-ad0805d06242",
+          "mode": "list",
+          "cachedResultName": "DEV — Event Instances",
+          "cachedResultUrl": "https://app.notion.com/p/0558f1d37100498486495165c80c2e5e"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        400,
+        80
+      ],
+      "id": "85f43862-e0bb-40fa-b6b7-ab61cee36362",
+      "name": "Get many database pages",
+      "credentials": {
+        "notionApi": {
+          "id": "MmgoekamXUObs774",
+          "name": "Notion Theologenius"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "Session ID",
+              "field2": "property_session_external_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        624,
+        -16
+      ],
+      "id": "5451b2d9-9e7e-4302-8365-b13221375576",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7947d2eb-c34f-4bab-bb73-7c0ac4f4f039",
+              "leftValue": "={{ $json[\"Date\"] }}",
+              "rightValue": "={{ $json[\"property_event_date\"][\"start\"].slice(0,10) }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "30176eac-8e12-42a2-9bfa-8783ac63a04d",
+              "leftValue": "={{ $json.Location }}",
+              "rightValue": "={{ $('Get many database pages').item.json.property_team_location_name_helper[0] }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "d5addf8d-4c84-4468-b5dd-9599d30f77b6",
+              "leftValue": "={{ $json['Reading Unit'] }}",
+              "rightValue": "={{ $json.property_programme_item_name_helper[0] }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "043e2a57-cc97-426d-b0f3-e87427b2601d",
+              "leftValue": "={{ $json['Session Status'] }}",
+              "rightValue": "={{ $('Get many database pages').item.json.property_instance_status }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        -16
+      ],
+      "id": "ba627b81-d176-489a-92f1-8a6b48f89ab8",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA",
+          "mode": "list",
+          "cachedResultName": "DEV VERSION Bible Facilitation Roster",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1904004001,
+          "mode": "list",
+          "cachedResultName": "Sessions — Sync",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit#gid=1904004001"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        400,
+        -96
+      ],
+      "id": "8d4f4f57-ac3e-4b74-8bd7-148e40f67035",
+      "name": "Get row(s) in DEV sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YqyZKJ3DcH6BmSqN",
+          "name": "GoogleAuth"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in DEV sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get many database pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many database pages": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in DEV sheet": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c7d0b074-1c16-4ea6-8a7c-83e6696da10d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a035d710f952601e58e2e394cc86b8497b51f348ba066183cfc9a59870092c9e"
+  },
+  "nodeGroups": [],
+  "id": "Dsdcm0aQ2it7o2zS",
+  "tags": []
+}
