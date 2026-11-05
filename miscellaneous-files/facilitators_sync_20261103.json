@@ -1,0 +1,1800 @@
+[
+  {
+    "id": "3eac267d-550f-8109-985a-d88cf34a5ae8",
+    "name": "Domino",
+    "url": "https://app.notion.com/p/Domino-3eac267d550f8109985ad88cf34a5ae8",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000059",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Domino"
+  },
+  {
+    "id": "3eac267d-550f-8114-bb50-d231b489604c",
+    "name": "Robin",
+    "url": "https://app.notion.com/p/Robin-3eac267d550f8114bb50d231b489604c",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000021",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8196-b280-ec76743099a9",
+      "3eac267d-550f-8187-bf88-c15a3a9f0889",
+      "3eac267d-550f-8144-8a81-c545793489b0",
+      "3eac267d-550f-8112-9dda-ed9a1736f2f4"
+    ],
+    "property_available_until": null,
+    "property_name": "Robin"
+  },
+  {
+    "id": "3eac267d-550f-811a-abd4-d5c125efa1d8",
+    "name": "Star-Lord",
+    "url": "https://app.notion.com/p/Star-Lord-3eac267d550f811aabd4d5c125efa1d8",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000043",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8159-904d-eddcf63f1ccb",
+      "3eac267d-550f-8120-b918-c5c5f0c187d5",
+      "3eac267d-550f-8119-a273-c63393982e3c",
+      "3eac267d-550f-813b-8a47-f54b18efa444",
+      "3eac267d-550f-81e4-aed7-feca30278d5b"
+    ],
+    "property_available_until": null,
+    "property_name": "Star-Lord"
+  },
+  {
+    "id": "3eac267d-550f-811c-92f4-ef483e794238",
+    "name": "Jubilee",
+    "url": "https://app.notion.com/p/Jubilee-3eac267d550f811c92f4ef483e794238",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000060",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Jubilee"
+  },
+  {
+    "id": "3eac267d-550f-811d-b7fb-e511e3a26989",
+    "name": "Jean Grey",
+    "url": "https://app.notion.com/p/Jean-Grey-3eac267d550f811db7fbe511e3a26989",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000050",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8104-9f3d-f588d2bee2dd",
+      "3eac267d-550f-8141-8975-cfac9fe44fb8",
+      "3eac267d-550f-811f-9c30-d912af8d728d",
+      "3eac267d-550f-816f-8493-f8fb97b2b648"
+    ],
+    "property_available_until": null,
+    "property_name": "Jean Grey"
+  },
+  {
+    "id": "3eac267d-550f-812b-a33f-d16aba1272a1",
+    "name": "Rogue",
+    "url": "https://app.notion.com/p/Rogue-3eac267d550f812ba33fd16aba1272a1",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000052",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate",
+      "Newcomer Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8106-a4db-e178b846931b",
+      "3eac267d-550f-8109-8d7c-dc5568f35e5d",
+      "3eac267d-550f-8131-ac5a-c74cb67dd05d",
+      "3eac267d-550f-8123-ad01-cfb777c5ca64",
+      "3eac267d-550f-819c-8b99-dfa151555baa"
+    ],
+    "property_available_until": null,
+    "property_name": "Rogue"
+  },
+  {
+    "id": "3eac267d-550f-8132-84e3-d59e79957b01",
+    "name": "Daredevil",
+    "url": "https://app.notion.com/p/Daredevil-3eac267d550f813284e3d59e79957b01",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000029",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8141-80da-c99aa272dfc8",
+      "3eac267d-550f-81dc-b8ff-f1b2e2a84764",
+      "3eac267d-550f-81bf-8fb6-ea3d14d3c8b3",
+      "3eac267d-550f-8118-8a0d-e1fff56985ad",
+      "3eac267d-550f-819e-8b14-ec6fd1598b2c"
+    ],
+    "property_available_until": null,
+    "property_name": "Daredevil"
+  },
+  {
+    "id": "3eac267d-550f-8148-9d0f-ea58a3d1e4b8",
+    "name": "Black Canary",
+    "url": "https://app.notion.com/p/Black-Canary-3eac267d550f81489d0fea58a3d1e4b8",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000066",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Black Canary"
+  },
+  {
+    "id": "3eac267d-550f-814b-bb55-f3a0462ebf6d",
+    "name": "Vixen",
+    "url": "https://app.notion.com/p/Vixen-3eac267d550f814bbb55f3a0462ebf6d",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000072",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81f6-bac1-edfd4d2f4240",
+      "3eac267d-550f-819c-9072-fc06bebd9298",
+      "3eac267d-550f-8182-b91f-f61efb02a29e",
+      "3eac267d-550f-8176-83a3-e087bd0936b3",
+      "3eac267d-550f-81ef-affd-dc151814bbbb"
+    ],
+    "property_available_until": null,
+    "property_name": "Vixen"
+  },
+  {
+    "id": "3eac267d-550f-8153-a973-d1cff9fe1839",
+    "name": "Winter Soldier",
+    "url": "https://app.notion.com/p/Winter-Soldier-3eac267d550f8153a973d1cff9fe1839",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000038",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8192-acaa-e1618afeace2",
+      "3eac267d-550f-81bc-a85e-f8c212a0582e",
+      "3eac267d-550f-812b-97ea-f40ed2e1651a"
+    ],
+    "property_available_until": null,
+    "property_name": "Winter Soldier"
+  },
+  {
+    "id": "3eac267d-550f-8159-832d-f2d80d0e387d",
+    "name": "Rocket",
+    "url": "https://app.notion.com/p/Rocket-3eac267d550f8159832df2d80d0e387d",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000045",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate",
+      "Newcomer Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81b2-95d2-f31fa2f5851a",
+      "3eac267d-550f-817e-b55f-d3af84a21438",
+      "3eac267d-550f-8175-a805-fe5c3bc811f8",
+      "3eac267d-550f-818b-9cef-d713c0b351f9"
+    ],
+    "property_available_until": null,
+    "property_name": "Rocket"
+  },
+  {
+    "id": "3eac267d-550f-815e-ad32-c7abca7022c7",
+    "name": "Beast Boy",
+    "url": "https://app.notion.com/p/Beast-Boy-3eac267d550f815ead32c7abca7022c7",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000070",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-813d-b482-d1912258fa18",
+      "3eac267d-550f-81a5-bdbd-c3ac9fc3c764",
+      "3eac267d-550f-81d5-88ae-edb95eccd39e"
+    ],
+    "property_available_until": null,
+    "property_name": "Beast Boy"
+  },
+  {
+    "id": "3eac267d-550f-8168-8ee5-feef8019e7e8",
+    "name": "Static",
+    "url": "https://app.notion.com/p/Static-3eac267d550f81688ee5feef8019e7e8",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000071",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate",
+      "Newcomer Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81c3-b936-f8f57f1b08d5",
+      "3eac267d-550f-8162-8a5c-c901ede2fdd4",
+      "3eac267d-550f-813d-b5d6-c415a55c3048"
+    ],
+    "property_available_until": null,
+    "property_name": "Static"
+  },
+  {
+    "id": "3eac267d-550f-816b-8ad2-c6785f9a85b0",
+    "name": "Colossus",
+    "url": "https://app.notion.com/p/Colossus-3eac267d550f816b8ad2c6785f9a85b0",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000055",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-812b-a2f2-e58270407fa4",
+      "3eac267d-550f-81bc-804e-c9215e961b6f",
+      "3eac267d-550f-8133-8f5b-f7d5aaf51855",
+      "3eac267d-550f-8164-a9cb-d34053814ed1",
+      "3eac267d-550f-810c-9c72-c1966bcd1ea0",
+      "3eac267d-550f-811d-9d1d-c3ddcb2b2fbf",
+      "3eac267d-550f-8169-8421-f1cdf3be4d5a"
+    ],
+    "property_available_until": null,
+    "property_name": "Colossus"
+  },
+  {
+    "id": "3eac267d-550f-816b-afc1-c4cecd86b72e",
+    "name": "Cable",
+    "url": "https://app.notion.com/p/Cable-3eac267d550f816bafc1c4cecd86b72e",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000058",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate",
+      "Newcomer Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8184-9ec1-fc8a9732c828",
+      "3eac267d-550f-81ef-af3b-f2d02ace6ea0",
+      "3eac267d-550f-81a3-bb07-c58055e9d586",
+      "3eac267d-550f-81d4-b841-f5be71209405"
+    ],
+    "property_available_until": null,
+    "property_name": "Cable"
+  },
+  {
+    "id": "3eac267d-550f-816d-95b2-c2e3ce421012",
+    "name": "Iceman",
+    "url": "https://app.notion.com/p/Iceman-3eac267d550f816d95b2c2e3ce421012",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000054",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-816a-9ffb-c3fd42d6ff39",
+      "3eac267d-550f-81b1-8967-d2a0ded74ca0",
+      "3eac267d-550f-816b-9656-feefe7bd6c2e",
+      "3eac267d-550f-81d9-885c-cbd1a7fad0e7",
+      "3eac267d-550f-812b-af3b-c88688cea8b4",
+      "3eac267d-550f-8156-b547-f6e3204a37c6",
+      "3eac267d-550f-812b-8152-f5925ac005b9"
+    ],
+    "property_available_until": null,
+    "property_name": "Iceman"
+  },
+  {
+    "id": "3eac267d-550f-8178-8024-e25cfa0d4bde",
+    "name": "Gamora",
+    "url": "https://app.notion.com/p/Gamora-3eac267d550f81788024e25cfa0d4bde",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000042",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81d3-ba26-c6ea1796b908",
+      "3eac267d-550f-81ef-80c4-fd09ca0f02e8",
+      "3eac267d-550f-817d-bfa6-f294ce8a33f5",
+      "3eac267d-550f-8162-9dff-cb90a7a0fc5b",
+      "3eac267d-550f-8148-ad7d-c53781cd7a91"
+    ],
+    "property_available_until": null,
+    "property_name": "Gamora"
+  },
+  {
+    "id": "3eac267d-550f-817a-805e-d0cb978d0b4f",
+    "name": "Deadpool",
+    "url": "https://app.notion.com/p/Deadpool-3eac267d550f817a805ed0cb978d0b4f",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000057",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-818c-9758-c81de0df39df",
+      "3eac267d-550f-819d-9eb0-c7d3f5498e35",
+      "3eac267d-550f-8108-b30b-c0bdd6368d60",
+      "3eac267d-550f-8186-9880-eca2ff28eddd",
+      "3eac267d-550f-81e5-88e3-f9b97c88cdea"
+    ],
+    "property_available_until": null,
+    "property_name": "Deadpool"
+  },
+  {
+    "id": "3eac267d-550f-817b-80e5-d0c4595c867c",
+    "name": "Martian Manhunter",
+    "url": "https://app.notion.com/p/Martian-Manhunter-3eac267d550f817b80e5d0c4595c867c",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000061",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8156-bb8b-f528b8a67595",
+      "3eac267d-550f-812d-b3ae-cb48ae85d8c1",
+      "3eac267d-550f-818d-abcf-ff2b82ead16f",
+      "3eac267d-550f-8109-aa69-d14ca79e4c59",
+      "3eac267d-550f-81d0-b393-ed6d820cfd0d",
+      "3eac267d-550f-8113-b441-c41afde3da75"
+    ],
+    "property_available_until": null,
+    "property_name": "Martian Manhunter"
+  },
+  {
+    "id": "3eac267d-550f-817e-bbc3-c553e4c59fe0",
+    "name": "Atom",
+    "url": "https://app.notion.com/p/Atom-3eac267d550f817ebbc3c553e4c59fe0",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000064",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81fb-8230-ff625c191118",
+      "3eac267d-550f-81c6-b433-fdd05a9642dd",
+      "3eac267d-550f-8101-a90c-eddfc3843797",
+      "3eac267d-550f-8109-bcb6-e6b8f9679a43"
+    ],
+    "property_available_until": null,
+    "property_name": "Atom"
+  },
+  {
+    "id": "3eac267d-550f-8189-b9c5-cdda9f23dee5",
+    "name": "Raven",
+    "url": "https://app.notion.com/p/Raven-3eac267d550f8189b9c5cdda9f23dee5",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000068",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8177-8b37-eab3342d364c",
+      "3eac267d-550f-8129-965c-def902e235be",
+      "3eac267d-550f-8167-9ec1-c519fb36dc5c",
+      "3eac267d-550f-81a9-875d-c9d67ff87081",
+      "3eac267d-550f-81f8-b77a-c8949b63545e"
+    ],
+    "property_available_until": null,
+    "property_name": "Raven"
+  },
+  {
+    "id": "3eac267d-550f-819a-b15f-d9a94b50df76",
+    "name": "Kitty Pryde",
+    "url": "https://app.notion.com/p/Kitty-Pryde-3eac267d550f819ab15fd9a94b50df76",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000056",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8171-a0c4-cc6a3d1ac624",
+      "3eac267d-550f-818b-a620-ef852a886839",
+      "3eac267d-550f-8123-a149-cacca5aa00e8",
+      "3eac267d-550f-817f-b0ce-c383f507bc20",
+      "3eac267d-550f-81b4-a0b0-d7c3ebe3bf0c"
+    ],
+    "property_available_until": null,
+    "property_name": "Kitty Pryde"
+  },
+  {
+    "id": "3eac267d-550f-81a3-bae2-e213e31a07a3",
+    "name": "Valkyrie",
+    "url": "https://app.notion.com/p/Valkyrie-3eac267d550f81a3bae2e213e31a07a3",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000040",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81f1-b1e9-c64c413f33ef",
+      "3eac267d-550f-81ce-ad99-e8660ffa6680",
+      "3eac267d-550f-8136-9375-e965adc722dc",
+      "3eac267d-550f-8155-acc4-d5cdc2cbe805",
+      "3eac267d-550f-81b8-b481-e29eaeeff8cd"
+    ],
+    "property_available_until": null,
+    "property_name": "Valkyrie"
+  },
+  {
+    "id": "3eac267d-550f-81a4-ba71-d60a48133112",
+    "name": "Supergirl",
+    "url": "https://app.notion.com/p/Supergirl-3eac267d550f81a4ba71d60a48133112",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000023",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8144-be47-d06bbae08e2c",
+      "3eac267d-550f-8133-b6aa-f74f22a83b50",
+      "3eac267d-550f-812f-bb14-d7950412539c",
+      "3eac267d-550f-8158-8676-f39d0b0a776e",
+      "3eac267d-550f-812a-a566-e85cce936adb"
+    ],
+    "property_available_until": null,
+    "property_name": "Supergirl"
+  },
+  {
+    "id": "3eac267d-550f-81a6-9033-faae04229a48",
+    "name": "Moon Knight",
+    "url": "https://app.notion.com/p/Moon-Knight-3eac267d550f81a69033faae04229a48",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000032",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8145-8f97-c19d2437ee52",
+      "3eac267d-550f-81da-81e1-d94100983f4b",
+      "3eac267d-550f-81ef-a798-cd31582c7c31",
+      "3eac267d-550f-81e7-ab30-ce1b3c3c509b"
+    ],
+    "property_available_until": null,
+    "property_name": "Moon Knight"
+  },
+  {
+    "id": "3eac267d-550f-81a6-96f1-ce0fb0b76520",
+    "name": "She-Hulk",
+    "url": "https://app.notion.com/p/She-Hulk-3eac267d550f81a696f1ce0fb0b76520",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000033",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate",
+      "Newcomer Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8168-8b23-f9b63fa18631",
+      "3eac267d-550f-817c-b826-d6e80460caae",
+      "3eac267d-550f-81c5-a63a-c3a6b44531a6",
+      "3eac267d-550f-81ee-9662-d15a9d90808b"
+    ],
+    "property_available_until": null,
+    "property_name": "She-Hulk"
+  },
+  {
+    "id": "3eac267d-550f-81a7-9326-eaa48f69a073",
+    "name": "Shang-Chi",
+    "url": "https://app.notion.com/p/Shang-Chi-3eac267d550f81a79326eaa48f69a073",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000039",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate",
+      "Newcomer Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8122-be7c-d5c701e0760d",
+      "3eac267d-550f-815b-96c4-e85ea20b0022",
+      "3eac267d-550f-810b-9557-cff8b867263a"
+    ],
+    "property_available_until": null,
+    "property_name": "Shang-Chi"
+  },
+  {
+    "id": "3eac267d-550f-81a7-a8ee-c5f11e4185f7",
+    "name": "Batgirl",
+    "url": "https://app.notion.com/p/Batgirl-3eac267d550f81a7a8eec5f11e4185f7",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000022",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8158-84cb-d0f491019ed8",
+      "3eac267d-550f-81cc-bf31-f945080e8e4f",
+      "3eac267d-550f-8154-b36e-c3ed1789482d",
+      "3eac267d-550f-81cd-aa41-f4cc49606fa0"
+    ],
+    "property_available_until": null,
+    "property_name": "Batgirl"
+  },
+  {
+    "id": "3eac267d-550f-81a9-909d-d0700dbf9e97",
+    "name": "Nightwing",
+    "url": "https://app.notion.com/p/Nightwing-3eac267d550f81a9909dd0700dbf9e97",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000028",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Nightwing"
+  },
+  {
+    "id": "3eac267d-550f-81ab-b5b2-c9220ede0d40",
+    "name": "Ant-Man",
+    "url": "https://app.notion.com/p/Ant-Man-3eac267d550f81abb5b2c9220ede0d40",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000034",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Ant-Man"
+  },
+  {
+    "id": "3eac267d-550f-81bc-9633-f27cd7d99c05",
+    "name": "Groot",
+    "url": "https://app.notion.com/p/Groot-3eac267d550f81bc9633f27cd7d99c05",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000044",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-815e-9343-d4a814a94e13",
+      "3eac267d-550f-8121-aa3a-c0a8103f4323",
+      "3eac267d-550f-8176-9ed9-d9c9be675005",
+      "3eac267d-550f-817f-8217-cd100137e658"
+    ],
+    "property_available_until": null,
+    "property_name": "Groot"
+  },
+  {
+    "id": "3eac267d-550f-81c0-bf58-e484647830df",
+    "name": "Blue Beetle",
+    "url": "https://app.notion.com/p/Blue-Beetle-3eac267d550f81c0bf58e484647830df",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000027",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Blue Beetle"
+  },
+  {
+    "id": "3eac267d-550f-81c1-88cc-fe99510792bc",
+    "name": "Starfire",
+    "url": "https://app.notion.com/p/Starfire-3eac267d550f81c188ccfe99510792bc",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000069",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81a7-a379-ee4f82d61766",
+      "3eac267d-550f-818a-9d58-cc6ac30dee19",
+      "3eac267d-550f-81d6-94b1-d132529cf697",
+      "3eac267d-550f-81bb-8502-dc8e0f90d60b"
+    ],
+    "property_available_until": null,
+    "property_name": "Starfire"
+  },
+  {
+    "id": "3eac267d-550f-81c3-9e16-e74cb8bfa56b",
+    "name": "Gambit",
+    "url": "https://app.notion.com/p/Gambit-3eac267d550f81c39e16e74cb8bfa56b",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000053",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Gambit"
+  },
+  {
+    "id": "3eac267d-550f-81c3-b8b5-e02a0072bf23",
+    "name": "Hawkgirl",
+    "url": "https://app.notion.com/p/Hawkgirl-3eac267d550f81c3b8b5e02a0072bf23",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000062",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81fd-b664-eb8e5737f703",
+      "3eac267d-550f-81e7-94e8-eabb0c133698",
+      "3eac267d-550f-814d-aea8-e9a5b41fef28",
+      "3eac267d-550f-8140-b53c-e9183d18e2e1",
+      "3eac267d-550f-8146-9f70-c39d6811f7e9",
+      "3eac267d-550f-8110-bdc5-d94067aa8732"
+    ],
+    "property_available_until": null,
+    "property_name": "Hawkgirl"
+  },
+  {
+    "id": "3eac267d-550f-81cb-bf84-f07fd7941ec4",
+    "name": "Cyclops",
+    "url": "https://app.notion.com/p/Cyclops-3eac267d550f81cbbf84f07fd7941ec4",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000049",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81b8-91ae-e6c37b15d398",
+      "3eac267d-550f-8143-86d4-f299fbf159ba",
+      "3eac267d-550f-8195-9b44-c771ea9dcffa",
+      "3eac267d-550f-8152-9962-e4951877b352"
+    ],
+    "property_available_until": null,
+    "property_name": "Cyclops"
+  },
+  {
+    "id": "3eac267d-550f-81d3-805c-efe324f0e896",
+    "name": "Zatanna",
+    "url": "https://app.notion.com/p/Zatanna-3eac267d550f81d3805cefe324f0e896",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000063",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-818a-b1e4-eaca16e522d0",
+      "3eac267d-550f-819f-80ca-cc3bde94ca9f",
+      "3eac267d-550f-81c6-a1d1-dd4576071fe3",
+      "3eac267d-550f-8177-8944-c722c376b6a7",
+      "3eac267d-550f-8106-955e-d78ac132f447"
+    ],
+    "property_available_until": null,
+    "property_name": "Zatanna"
+  },
+  {
+    "id": "3eac267d-550f-81d3-aa8a-ebcaaf415d1a",
+    "name": "Nebula",
+    "url": "https://app.notion.com/p/Nebula-3eac267d550f81d3aa8aebcaaf415d1a",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000047",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Nebula"
+  },
+  {
+    "id": "3eac267d-550f-81d8-a75a-e461c7996361",
+    "name": "Jessica Jones",
+    "url": "https://app.notion.com/p/Jessica-Jones-3eac267d550f81d8a75ae461c7996361",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000031",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8192-8503-f2fb578c7d36",
+      "3eac267d-550f-811f-b275-c9d155e12e7a",
+      "3eac267d-550f-8119-aff2-da6948fe09f0",
+      "3eac267d-550f-81ba-8944-d1833f9dd2f5"
+    ],
+    "property_available_until": null,
+    "property_name": "Jessica Jones"
+  },
+  {
+    "id": "3eac267d-550f-81da-9574-e3c3680dcde0",
+    "name": "Luke Cage",
+    "url": "https://app.notion.com/p/Luke-Cage-3eac267d550f81da9574e3c3680dcde0",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000030",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81d0-86ff-f4f184662f78",
+      "3eac267d-550f-8199-9f49-f48fe041f7db",
+      "3eac267d-550f-8119-8df9-e2a11663265f",
+      "3eac267d-550f-8132-828c-ff858f8f039c",
+      "3eac267d-550f-814e-ac08-d565cf4b16f9"
+    ],
+    "property_available_until": null,
+    "property_name": "Luke Cage"
+  },
+  {
+    "id": "3eac267d-550f-81dd-ac28-f8a4fdd8d9dc",
+    "name": "Booster Gold",
+    "url": "https://app.notion.com/p/Booster-Gold-3eac267d550f81ddac28f8a4fdd8d9dc",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000067",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81c8-850d-c337663b3786",
+      "3eac267d-550f-8168-a6ec-fb916f394606",
+      "3eac267d-550f-81c5-a8e2-efecd72579a7",
+      "3eac267d-550f-814f-8889-f96fecdca049",
+      "3eac267d-550f-8109-bee9-f6f7c4624186",
+      "3eac267d-550f-8107-9406-c03c4429653b",
+      "3eac267d-550f-8190-b9d2-e7afa82be75f"
+    ],
+    "property_available_until": null,
+    "property_name": "Booster Gold"
+  },
+  {
+    "id": "3eac267d-550f-81df-9974-dac8b95e102b",
+    "name": "Firestorm",
+    "url": "https://app.notion.com/p/Firestorm-3eac267d550f81df9974dac8b95e102b",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000065",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate",
+      "Newcomer Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81d0-a2b3-cc0c84c3765f",
+      "3eac267d-550f-8130-9f95-e288bd1f6e2f",
+      "3eac267d-550f-81ee-a33d-ce1fbce18155",
+      "3eac267d-550f-810e-a14a-f568fca547f0"
+    ],
+    "property_available_until": null,
+    "property_name": "Firestorm"
+  },
+  {
+    "id": "3eac267d-550f-81e7-8284-ffd2fbec88fe",
+    "name": "Professor X",
+    "url": "https://app.notion.com/p/Professor-X-3eac267d550f81e78284ffd2fbec88fe",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000048",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-812a-8de9-dc151175cdc5",
+      "3eac267d-550f-81eb-b2f0-f6479a2a8a13",
+      "3eac267d-550f-810b-abc2-c34898efda8b",
+      "3eac267d-550f-81ad-8a17-d2e2eebebc7a",
+      "3eac267d-550f-8183-b228-ff5b2cdec8fb",
+      "3eac267d-550f-810b-a63d-c3c17cc508ec"
+    ],
+    "property_available_until": null,
+    "property_name": "Professor X"
+  },
+  {
+    "id": "3eac267d-550f-81e7-b63f-f001f909bed3",
+    "name": "Loki",
+    "url": "https://app.notion.com/p/Loki-3eac267d550f81e7b63ff001f909bed3",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000041",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8187-b3f3-cd584bbf732c",
+      "3eac267d-550f-8167-b51b-e61e43b5b083",
+      "3eac267d-550f-81a2-929c-d449d6e9116b",
+      "3eac267d-550f-81f7-8448-f61a56ceff2a",
+      "3eac267d-550f-81e7-a909-ec92fbe1ef3b"
+    ],
+    "property_available_until": null,
+    "property_name": "Loki"
+  },
+  {
+    "id": "3eac267d-550f-81e9-bf16-e052ac5a4ca4",
+    "name": "Beast",
+    "url": "https://app.notion.com/p/Beast-3eac267d550f81e9bf16e052ac5a4ca4",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000051",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81ed-acfe-e0c7242f25b6",
+      "3eac267d-550f-8178-a1e0-c89059d52e2a",
+      "3eac267d-550f-81b2-b009-f8bc96b5fd09",
+      "3eac267d-550f-81c5-92c8-ea2b60c84bee",
+      "3eac267d-550f-814b-9634-e0e5da39a4bd",
+      "3eac267d-550f-812f-8271-fcaca0e80088"
+    ],
+    "property_available_until": null,
+    "property_name": "Beast"
+  },
+  {
+    "id": "3eac267d-550f-81ec-8e03-d07385f030e2",
+    "name": "Cyborg",
+    "url": "https://app.notion.com/p/Cyborg-3eac267d550f81ec8e03d07385f030e2",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000024",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-812a-a4fc-ecbdd9f148e7",
+      "3eac267d-550f-8168-8b04-df92416905ce",
+      "3eac267d-550f-810d-b976-e31665612844",
+      "3eac267d-550f-8115-8e67-d2fd57248fd0",
+      "3eac267d-550f-8123-b2ba-d325c8c6836e"
+    ],
+    "property_available_until": null,
+    "property_name": "Cyborg"
+  },
+  {
+    "id": "3eac267d-550f-81ee-94c6-fa7e6bf597bb",
+    "name": "Green Arrow",
+    "url": "https://app.notion.com/p/Green-Arrow-3eac267d550f81ee94c6fa7e6bf597bb",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000025",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate",
+      "Newcomer Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81d3-b50e-f3bfa30f5396",
+      "3eac267d-550f-81f8-967f-fb1c2510a3e7",
+      "3eac267d-550f-8122-bebd-e9d5e6cf88ce",
+      "3eac267d-550f-81de-91c2-db770559522b",
+      "3eac267d-550f-814d-ae2c-cfed04909ed5"
+    ],
+    "property_available_until": null,
+    "property_name": "Green Arrow"
+  },
+  {
+    "id": "3eac267d-550f-81f1-9829-fecca34da5cb",
+    "name": "Wasp",
+    "url": "https://app.notion.com/p/Wasp-3eac267d550f81f19829fecca34da5cb",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000035",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8102-a2a2-f29c357b41da",
+      "3eac267d-550f-81ad-92b9-d5cbc7135361",
+      "3eac267d-550f-81da-8bc9-e77d9d6febeb",
+      "3eac267d-550f-81c0-857f-e7715e15747a",
+      "3eac267d-550f-815a-8b79-cb77f65ec32e"
+    ],
+    "property_available_until": null,
+    "property_name": "Wasp"
+  },
+  {
+    "id": "3eac267d-550f-81f6-9530-e1e171b1ca72",
+    "name": "Falcon",
+    "url": "https://app.notion.com/p/Falcon-3eac267d550f81f69530e1e171b1ca72",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000037",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81a8-9c0c-f0d8fbabb8a7",
+      "3eac267d-550f-8169-b311-fa8a09ed5d66",
+      "3eac267d-550f-8148-92dc-d207d4063eaf",
+      "3eac267d-550f-8170-8356-fd84e67802a8"
+    ],
+    "property_available_until": null,
+    "property_name": "Falcon"
+  },
+  {
+    "id": "3eac267d-550f-81f7-8f78-d4849ac803f6",
+    "name": "Vision",
+    "url": "https://app.notion.com/p/Vision-3eac267d550f81f78f78d4849ac803f6",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000036",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81c3-bf18-c9e9b93149f5",
+      "3eac267d-550f-81ff-b3df-dd1e5403c3be"
+    ],
+    "property_available_until": null,
+    "property_name": "Vision"
+  },
+  {
+    "id": "3eac267d-550f-81fc-bffb-d1d8e114e730",
+    "name": "Shazam",
+    "url": "https://app.notion.com/p/Shazam-3eac267d550f81fcbffbd1d8e114e730",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000026",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Shazam"
+  },
+  {
+    "id": "3eac267d-550f-81fe-a07a-da7bc98fd12b",
+    "name": "Mantis",
+    "url": "https://app.notion.com/p/Mantis-3eac267d550f81fea07ada7bc98fd12b",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000046",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Mantis"
+  },
+  {
+    "id": "3eac267d-550f-8102-a1f2-e6482b1044a1",
+    "name": "Green Lantern",
+    "url": "https://app.notion.com/p/Green-Lantern-3eac267d550f8102a1f2e6482b1044a1",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000020",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Retired",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Green Lantern"
+  },
+  {
+    "id": "3eac267d-550f-810e-8224-d21251aa5a9a",
+    "name": "Batman",
+    "url": "https://app.notion.com/p/Batman-3eac267d550f810e8224d21251aa5a9a",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000003",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Batman"
+  },
+  {
+    "id": "3eac267d-550f-8112-88ba-f32c9e2d5954",
+    "name": "Thor",
+    "url": "https://app.notion.com/p/Thor-3eac267d550f811288baf32c9e2d5954",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000011",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8188-9949-c214bd1c8fbb",
+      "3eac267d-550f-81b5-8881-fbaa02d90e1c",
+      "3eac267d-550f-81a2-a6b4-fcb212fa7f69",
+      "3eac267d-550f-81f3-bdc1-d99a291f8166",
+      "3eac267d-550f-8143-9d4f-d975944c0b6e"
+    ],
+    "property_available_until": null,
+    "property_name": "Thor"
+  },
+  {
+    "id": "3eac267d-550f-8116-a02f-d1ce487cd481",
+    "name": "Scarlet Witch",
+    "url": "https://app.notion.com/p/Scarlet-Witch-3eac267d550f8116a02fd1ce487cd481",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000016",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Paused",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Scarlet Witch"
+  },
+  {
+    "id": "3eac267d-550f-8155-999c-f520149794fa",
+    "name": "Ms. Marvel",
+    "url": "https://app.notion.com/p/Ms-Marvel-3eac267d550f8155999cf520149794fa",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000019",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Prospective",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Ms. Marvel"
+  },
+  {
+    "id": "3eac267d-550f-816b-87f1-c816895a9c72",
+    "name": "Superman",
+    "url": "https://app.notion.com/p/Superman-3eac267d550f816b87f1c816895a9c72",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000001",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-818d-bc47-dbd1b36fc675",
+      "3eac267d-550f-8115-8af0-cfda4e416491",
+      "3eac267d-550f-8197-a09d-d8325c4142da",
+      "3eac267d-550f-8194-a587-ee2caa38a884",
+      "3eac267d-550f-81f9-b313-edc9e40eadcb"
+    ],
+    "property_available_until": null,
+    "property_name": "Superman"
+  },
+  {
+    "id": "3eac267d-550f-817d-b42e-de262f55a4d0",
+    "name": "Iron Man",
+    "url": "https://app.notion.com/p/Iron-Man-3eac267d550f817db42ede262f55a4d0",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000009",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81c5-bf43-f5640d8c045e",
+      "3eac267d-550f-8102-b00f-d322f7e5382b",
+      "3eac267d-550f-81e6-bd74-e750b35da57d",
+      "3eac267d-550f-8189-8ae4-c0365a99c8e9",
+      "3eac267d-550f-81a1-a000-e978268921f4"
+    ],
+    "property_available_until": null,
+    "property_name": "Iron Man"
+  },
+  {
+    "id": "3eac267d-550f-819c-9326-da56101cc3b6",
+    "name": "Doctor Strange",
+    "url": "https://app.notion.com/p/Doctor-Strange-3eac267d550f819c9326da56101cc3b6",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000015",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Doctor Strange"
+  },
+  {
+    "id": "3eac267d-550f-81a2-8d91-dd38e7faffad",
+    "name": "Spider-Man",
+    "url": "https://app.notion.com/p/Spider-Man-3eac267d550f81a28d91dd38e7faffad",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000004",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate",
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-816c-ab7c-fe70a55196b1",
+      "3eac267d-550f-819d-805e-e3c4e97479a7",
+      "3eac267d-550f-8137-8eb0-c184c9f14e46",
+      "3eac267d-550f-8199-a158-e38f226efcc0",
+      "3eac267d-550f-8112-a407-c78cf3cae7f5"
+    ],
+    "property_available_until": null,
+    "property_name": "Spider-Man"
+  },
+  {
+    "id": "3eac267d-550f-81a4-90a4-d72fa6a642ea",
+    "name": "Hawkeye",
+    "url": "https://app.notion.com/p/Hawkeye-3eac267d550f81a490a4d72fa6a642ea",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000014",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Developing",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Hawkeye"
+  },
+  {
+    "id": "3eac267d-550f-81a8-bcec-d79495fc3f48",
+    "name": "Black Panther",
+    "url": "https://app.notion.com/p/Black-Panther-3eac267d550f81a8bcecd79495fc3f48",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000005",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81d5-beaf-c32af0ff9693",
+      "3eac267d-550f-81f6-9f4f-fb606422c15c",
+      "3eac267d-550f-8127-abfe-c8a6f0943188",
+      "3eac267d-550f-81c7-8ffd-dcd7d1c48eb3",
+      "3eac267d-550f-8171-a181-d2bda5eb17d0"
+    ],
+    "property_available_until": null,
+    "property_name": "Black Panther"
+  },
+  {
+    "id": "3eac267d-550f-81ae-9ace-f43b7d08087e",
+    "name": "Captain America",
+    "url": "https://app.notion.com/p/Captain-America-3eac267d550f81ae9acef43b7d08087e",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000010",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "L-Plate Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8190-9f0e-f9d585b8b32a",
+      "3eac267d-550f-8175-b1ad-eb73e4a847e8",
+      "3eac267d-550f-81af-903b-e4eceb4acc17",
+      "3eac267d-550f-81b5-82d0-e2fc6b126429",
+      "3eac267d-550f-812d-847e-dca3f12822fb"
+    ],
+    "property_available_until": null,
+    "property_name": "Captain America"
+  },
+  {
+    "id": "3eac267d-550f-81c1-ac90-d0c62b6a031c",
+    "name": "Wonder Woman",
+    "url": "https://app.notion.com/p/Wonder-Woman-3eac267d550f81c1ac90d0c62b6a031c",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000002",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-81b9-be31-d91bf8756dac",
+      "3eac267d-550f-8154-986a-f931493927fe",
+      "3eac267d-550f-81e5-9c81-d3b418441535",
+      "3eac267d-550f-81d3-9371-fb3dafb032ab",
+      "3eac267d-550f-81b3-8114-e972d13be743"
+    ],
+    "property_available_until": null,
+    "property_name": "Wonder Woman"
+  },
+  {
+    "id": "3eac267d-550f-81ce-bb1b-ccbf68b4d2b9",
+    "name": "Captain Marvel",
+    "url": "https://app.notion.com/p/Captain-Marvel-3eac267d550f81cebb1bccbf68b4d2b9",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000006",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate",
+      "Newcomer Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Captain Marvel"
+  },
+  {
+    "id": "3eac267d-550f-81d4-b707-f5325a2d6071",
+    "name": "Aquaman",
+    "url": "https://app.notion.com/p/Aquaman-3eac267d550f81d4b707f5325a2d6071",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000008",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Paused",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Aquaman"
+  },
+  {
+    "id": "3eac267d-550f-81ed-97ad-e4d871ec6778",
+    "name": "Storm",
+    "url": "https://app.notion.com/p/Storm-3eac267d550f81ed97ade4d871ec6778",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000018",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Lead / Announce",
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8143-8433-caf5a9c7762f",
+      "3eac267d-550f-81a4-8668-f4230f21cef5",
+      "3eac267d-550f-81cb-8db7-e8f19322f225",
+      "3eac267d-550f-81bf-8b8d-d1bf0420fa8a",
+      "3eac267d-550f-8177-8e98-ce9c997c17db"
+    ],
+    "property_available_until": null,
+    "property_name": "Storm"
+  },
+  {
+    "id": "3eac267d-550f-81f2-99a0-fa4ea5f8ad9a",
+    "name": "Black Widow",
+    "url": "https://app.notion.com/p/Black-Widow-3eac267d550f81f299a0fa4ea5f8ad9a",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000013",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate",
+      "Newcomer Support"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [
+      "3eac267d-550f-8161-8b2b-de046bc6efa2",
+      "3eac267d-550f-81e4-a47d-fed1ba235c1d",
+      "3eac267d-550f-81ee-aef2-c02908f967bd",
+      "3eac267d-550f-81fa-b629-ddadfacdf163",
+      "3eac267d-550f-8125-a91b-e1df40cac000"
+    ],
+    "property_available_until": null,
+    "property_name": "Black Widow"
+  },
+  {
+    "id": "3eac267d-550f-81f5-8e60-d3c4aa26df64",
+    "name": "Wolverine",
+    "url": "https://app.notion.com/p/Wolverine-3eac267d550f81f58e60d3c4aa26df64",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000017",
+    "property_available": [
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Stepped Down",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Wolverine"
+  },
+  {
+    "id": "3eac267d-550f-81fc-b698-d07983bc57ea",
+    "name": "Hulk",
+    "url": "https://app.notion.com/p/Hulk-3eac267d550f81fcb698d07983bc57ea",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000012",
+    "property_available": [
+      "Tuesday"
+    ],
+    "property_facilitation_roles": [
+      "L-Plate"
+    ],
+    "property_facilitator_status": "Invited",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "Hulk"
+  },
+  {
+    "id": "3eac267d-550f-81fe-9a1a-fac2270e18c1",
+    "name": "The Flash",
+    "url": "https://app.notion.com/p/The-Flash-3eac267d550f81fe9a1afac2270e18c1",
+    "property_cover_image": [],
+    "property_available_from": null,
+    "property_last_can": null,
+    "property_facilitator_external_id": "BR-F-000007",
+    "property_available": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "property_facilitation_roles": [
+      "Facilitate"
+    ],
+    "property_facilitator_status": "Active",
+    "property_serving_locations": [],
+    "property_facilitation_assignments": [],
+    "property_available_until": null,
+    "property_name": "The Flash"
+  }
+]

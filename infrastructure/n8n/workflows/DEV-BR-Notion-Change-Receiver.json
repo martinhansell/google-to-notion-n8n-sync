@@ -1,0 +1,1003 @@
+{
+  "name": "DEV-BR-Notion-Change-Receiver",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dev-br-notion-changes",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "87489264-a3f8-4a64-8cd2-939e3a5db4b6",
+      "name": "Webhook",
+      "webhookId": "573a0cb3-dfac-48e2-be00-9fbd50ab6ba3"
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "binaryData": true,
+        "dataPropertyName": "expected_signature"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -144
+      ],
+      "id": "e60a7327-86c0-42fd-a1e0-06394db09e1c",
+      "name": "DEV — Verify Notion Signature HMAC",
+      "credentials": {
+        "crypto": {
+          "id": "1OvEqSE41yl2qYKW",
+          "name": "DEV — Notion Webhook HMAC"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3d6bfec7-68e3-41d1-8247-b8202fc4722a",
+              "leftValue": "={{ Boolean(\n  $json.expected_signature &&\n  $('Webhook').first().json.headers?.['x-notion-signature'] &&\n  ('sha256=' + $json.expected_signature) ===\n  $('Webhook').first().json.headers['x-notion-signature']\n) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        240,
+        144
+      ],
+      "id": "217716a9-3af4-426d-af03-6141590ba70d",
+      "name": "DEV — Notion Signature Valid"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n/**\n * DEV — Identify Notion Change\n *\n * Receives only signature-verified webhook events.\n * Classifies Sessions, Assignments and Facilitators.\n * No external writes.\n */\n\nconst SOURCES = {\n  \"655cf0f3-93cd-4d72-920a-ad0805d06242\": \"Session\",\n  \"d31c840a-3bcf-4113-97dc-1526ebb9eac6\": \"Assignment\",\n  \"c08cd0af-3a20-4bf5-9deb-b2f3db272ab9\": \"Facilitator\"\n};\n\nconst results = [];\n\nfor (const item of $input.all()) {\n\n  // Read the original payload from the Webhook node.\n  const incoming = $(\"Webhook\").first().json.body;\n\n  const event = typeof incoming === \"string\"\n    ? JSON.parse(incoming)\n    : incoming;\n\n  // Only property-update events are relevant.\n  if (event?.type !== \"page.properties_updated\") {\n    continue;\n  }\n\n  const pageId = event.entity?.id ?? null;\n  const parent = event.data?.parent ?? {};\n\n  const dataSourceId =\n    parent.data_source_id ??\n    (parent.type === \"data_source\" ? parent.id : null) ??\n    parent.id ??\n    null;\n\n  const entityType = SOURCES[dataSourceId] ?? null;\n\n  const properties = Array.isArray(\n    event.data?.updated_properties\n  )\n    ? event.data.updated_properties\n    : [];\n\n  results.push({\n    json: {\n      eventId: event.id ?? null,\n      eventType: event.type,\n      changedAt: event.timestamp ?? null,\n      pageId,\n      dataSourceId,\n      entityType,\n      changedPropertyIds: properties,\n      changedPropertyCount: properties.length,\n      origin: \"Notion\",\n      attemptNumber: event.attempt_number ?? 1,\n      classification:\n        !pageId\n          ? \"REVIEW_MISSING_PAGE\"\n          : !entityType\n            ? \"REVIEW_UNKNOWN_SOURCE\"\n            : properties.length === 0\n              ? \"REVIEW_NO_PROPERTIES\"\n              : \"IDENTIFIED\",\n      safeToWrite: false\n    }\n  });\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        128
+      ],
+      "id": "bc1f9cc2-296e-44f1-89cd-2b4fad4fbd2f",
+      "name": "DEV — Identify Notion Change"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.notion.com/v1/data_sources/{{ $json.dataSourceId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2026-03-11"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        528,
+        -144
+      ],
+      "id": "21ad5c24-c146-4205-aefc-489cb077f633",
+      "name": "DEV — Resolve Notion Property",
+      "credentials": {
+        "notionApi": {
+          "id": "MmgoekamXUObs774",
+          "name": "Notion Theologenius"
+        },
+        "httpBearerAuth": {
+          "id": "5YXlptJIstFSkMmt",
+          "name": "DEV — Notion API 2026"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst event = $(\"DEV — Identify Notion Change\").first().json;\nconst schema = $input.first().json;\n\nfunction normaliseId(id) {\n  try {\n    return decodeURIComponent(String(id ?? \"\"));\n  } catch {\n    return String(id ?? \"\");\n  }\n}\n\nconst definitions = Object.entries(schema.properties ?? {});\n\nconst changedProperties = event.changedPropertyIds.map(id => {\n  const match = definitions.find(([name, property]) =>\n    normaliseId(property.id) === normaliseId(id)\n  );\n\n  return {\n    propertyId: id,\n    propertyName: match?.[0] ?? null,\n    propertyType: match?.[1]?.type ?? null\n  };\n});\n\nreturn [{\n  json: {\n    ...event,\n    changedProperties,\n    allPropertiesResolved: changedProperties.every(\n      p => p.propertyName !== null\n    ),\n    safeToWrite: false\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        -272
+      ],
+      "id": "ef18a9d9-640a-4730-9343-bc303be0b8be",
+      "name": "DEV — Map Notion Property Names"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n/**\n * DEV — Classify Notion Sync Fields\n *\n * Classifies verified, resolved Notion changes.\n * No data writes or sync authorisation.\n */\n\nconst FIELD_RULES = {\n  Session: {\n    \"Event Date\": {\n      action: \"SYNC_CANDIDATE\",\n      googleField: \"Date\"\n    },\n    \"Instance Status\": {\n      action: \"SYNC_CANDIDATE\",\n      googleField: \"Session Status\"\n    },\n    \"Instance Notes\": {\n      action: \"NOTION_ONLY\",\n      googleField: null\n    },\n    \"Event Instance\": {\n      action: \"TITLE_MAINTENANCE\",\n      googleField: null\n    }\n  },\n  Assignment: {},\n  Facilitator: {}\n};\n\nreturn $input.all().map(item => {\n  const event = item.json;\n  const rules = FIELD_RULES[event.entityType] ?? {};\n\n  const classifiedFields =\n    (event.changedProperties ?? []).map(property => {\n      const rule = rules[property.propertyName];\n\n      return {\n        ...property,\n        action: rule?.action ?? \"REVIEW_MAPPING\",\n        googleField: rule?.googleField ?? null\n      };\n    });\n\n  return {\n    json: {\n      ...event,\n      classifiedFields,\n      requiresSync: classifiedFields.some(\n        f => f.action === \"SYNC_CANDIDATE\"\n      ),\n      requiresReview: classifiedFields.some(\n        f => f.action === \"REVIEW_MAPPING\"\n      ),\n      decision:\n        !event.allPropertiesResolved\n          ? \"REVIEW\"\n          : classifiedFields.some(\n              f => f.action === \"REVIEW_MAPPING\"\n            )\n            ? \"REVIEW\"\n            : classifiedFields.some(\n                f => f.action === \"SYNC_CANDIDATE\"\n              )\n              ? \"SYNC_CANDIDATE\"\n              : \"NO_SYNC_REQUIRED\",\n      safeToWrite: false\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        -272
+      ],
+      "id": "462df216-0873-48d7-84f0-b028c9092aa2",
+      "name": "DEV — Classify Notion Sync Fields"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nINSERT INTO sync_events (\n    event_key,\n    origin,\n    entity_type,\n    external_id,\n    notion_page_id,\n    changed_at,\n    changed_fields,\n    event_payload,\n    status,\n    processed_at\n)\nVALUES (\n    $1,\n    'Notion',\n    $2,\n    $3,\n    $4,\n    $5::timestamptz,\n    $6::jsonb,\n    $7::jsonb,\n    $8,\n    CASE\n        WHEN $8 = 'IGNORED' THEN NOW()\n        ELSE NULL\n    END\n)\nON CONFLICT (event_key)\nDO UPDATE SET\n    external_id = EXCLUDED.external_id\nWHERE\n    sync_events.external_id IS NULL\n    AND EXCLUDED.external_id IS NOT NULL\nRETURNING\n    id,\n    event_key,\n    external_id,\n    status;\n",
+        "options": {
+          "queryReplacement": "=\n{{ [\n  $json.eventId,\n  $json.entityType,\n  $json.identityValid ? $json.externalId : null,\n  $json.pageId,\n  $json.changedAt,\n  JSON.stringify($json.classifiedFields),\n  JSON.stringify($json),\n  !$json.identityValid\n    ? \"REVIEW\"\n    : $json.decision === \"NO_SYNC_REQUIRED\"\n      ? \"IGNORED\"\n      : $json.decision === \"SYNC_CANDIDATE\"\n        ? \"RECEIVED\"\n        : \"REVIEW\"\n] }}\n"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1088,
+        -48
+      ],
+      "id": "30fcb163-cc92-454e-b7cd-c7a7d1de4333",
+      "name": "DEV — Register Notion Sync Event",
+      "credentials": {
+        "postgres": {
+          "id": "hIT0FRvYYAMZYbxy",
+          "name": "DEV — BR Sync PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.notion.com/v1/pages/{{ $json.pageId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2026-03-11"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1328,
+        -272
+      ],
+      "id": "3d29f66a-9a58-4b34-93dd-0d0b00d631ff",
+      "name": "DEV — Resolve Notion External ID",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "5YXlptJIstFSkMmt",
+          "name": "DEV — Notion API 2026"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst pages = $input.all();\n\nreturn pages.map(item => {\n  const page = item.json;\n\n  const event = $(\"DEV — Classify Notion Sync Fields\")\n    .first().json;\n\n  const property = page.properties?.[\"Session External ID\"];\n\n  let externalId = null;\n\n  if (property?.type === \"rich_text\") {\n    externalId = property.rich_text\n      .map(part => part.plain_text)\n      .join(\"\")\n      .trim();\n  } else if (property?.type === \"title\") {\n    externalId = property.title\n      .map(part => part.plain_text)\n      .join(\"\")\n      .trim();\n  }\n\n  const valid = Boolean(\n    externalId &&\n    /^BR-S-\\d{6}$/.test(externalId) &&\n    page.id === event.pageId\n  );\n\n  return {\n    json: {\n      ...event,\n      externalId,\n      identityValid: valid,\n      decision: valid\n        ? event.decision\n        : \"REVIEW_IDENTITY\",\n      safeToWrite: false\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        -48
+      ],
+      "id": "8af54a18-fa91-4422-b83f-17bd6a96d9c7",
+      "name": "DEV — Extract Notion External ID"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nSELECT\n    id,\n    event_key,\n    origin,\n    entity_type,\n    external_id,\n    notion_page_id,\n    changed_at,\n    changed_fields,\n    status\nFROM sync_events\nWHERE status = 'RECEIVED'\n  AND entity_type = 'Session'\n  AND external_id ~ '^BR-S-[0-9]{6}$'\n  AND origin = 'Notion'\n  AND EXISTS (\n      SELECT 1\n      FROM jsonb_array_elements(changed_fields) AS f\n      WHERE f->>'propertyName' = 'Event Date'\n        AND f->>'action' = 'SYNC_CANDIDATE'\n  )\nORDER BY changed_at ASC, id ASC\nLIMIT 10;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1344,
+        -48
+      ],
+      "id": "624dddf9-1359-4c13-9124-ddd154f657c0",
+      "name": "DEV — Read Pending Sync Events",
+      "credentials": {
+        "postgres": {
+          "id": "hIT0FRvYYAMZYbxy",
+          "name": "DEV — BR Sync PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nSELECT\n    e.id,\n    e.event_key,\n    e.origin,\n    e.external_id,\n    e.changed_at,\n    e.changed_fields,\n    e.status,\n    e.event_payload\nFROM sync_events e\nWHERE e.entity_type = 'Session'\n  AND e.external_id = $1\n  AND (\n      EXISTS (\n          SELECT 1\n          FROM jsonb_array_elements(e.changed_fields) AS f\n          WHERE f->>'field' = 'Date'\n             OR f->>'propertyName' = 'Event Date'\n      )\n  )\nORDER BY e.changed_at DESC, e.id DESC;\n",
+        "options": {
+          "queryReplacement": "={{ [ $json.external_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        832,
+        192
+      ],
+      "id": "e13eb019-6003-43e8-8014-a487d326e702",
+      "name": "DEV — Read Session Date Event History",
+      "credentials": {
+        "postgres": {
+          "id": "hIT0FRvYYAMZYbxy",
+          "name": "DEV — BR Sync PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst events = $input.all().map(i => i.json);\n\nconst sorted = events\n  .filter(e =>\n    e.external_id === \"BR-S-000001\" &&\n    [\"Google\", \"Notion\"].includes(e.origin) &&\n    !Number.isNaN(Date.parse(e.changed_at))\n  )\n  .sort((a, b) =>\n    Date.parse(b.changed_at) -\n    Date.parse(a.changed_at)\n  );\n\nif (!sorted.length) {\n  return [{\n    json: {\n      decision: \"REVIEW_NO_HISTORY\",\n      safeToWrite: false\n    }\n  }];\n}\n\nconst latest = sorted[0];\n\nconst dateField = (latest.changed_fields ?? [])\n  .find(f =>\n    f.field === \"Date\" ||\n    f.propertyName === \"Event Date\"\n  );\n\nreturn [{\n  json: {\n    sessionId: latest.external_id,\n    latestEventId: latest.id,\n    latestOrigin: latest.origin,\n    latestChangedAt: latest.changed_at,\n    proposedDate: dateField?.newValue ?? null,\n    decision: latest.origin === \"Google\"\n      ? \"GOOGLE_LATEST_RECORDED_EDIT\"\n      : \"NOTION_LATEST_RECORDED_EDIT\",\n    requiresCurrentValueCheck: true,\n    safeToWrite: false\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        192
+      ],
+      "id": "a2d28951-7cbf-41ce-9396-8b1c16082633",
+      "name": "DEV — Evaluate Latest Session Date Edit"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA",
+          "mode": "list",
+          "cachedResultName": "DEV VERSION Bible Facilitation Roster",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1904004001,
+          "mode": "list",
+          "cachedResultName": "Sessions — Sync",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit#gid=1904004001"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Session ID",
+              "lookupValue": "={{ $json.sessionId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1360,
+        192
+      ],
+      "id": "2ca7a073-2390-477a-913e-b39408aa3cb1",
+      "name": "DEV — Verify Current Google Session Date",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YqyZKJ3DcH6BmSqN",
+          "name": "GoogleAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.notion.com/v1/pages/' + $('DEV — Read Pending Sync Events').first().json.notion_page_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2026-03-11"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        832,
+        432
+      ],
+      "id": "ae73b2d5-6745-4915-bd20-a3ebada29915",
+      "name": "DEV — Verify Current Notion Session Date",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "5YXlptJIstFSkMmt",
+          "name": "DEV — Notion API 2026"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\n/**\n * Stage 9 Pt. 3 — Session Date Direction\n * DEV decision preview. No updates or status changes.\n */\n\nconst pending = $('DEV — Read Pending Sync Events').first().json;\nconst history = $('DEV — Read Session Date Event History')\n  .all().map(item => item.json);\n\nconst googleRows = $('DEV — Verify Current Google Session Date')\n  .all().map(item => item.json);\n\nconst notion = $('DEV — Verify Current Notion Session Date')\n  .first().json;\n\nconst sessionId = pending.external_id;\n\nconst dateOnly = value =>\n  typeof value === 'string'\n    ? value.slice(0, 10)\n    : null;\n\nfunction result(decision, reason, extra = {}) {\n  return [{\n    json: {\n      sessionId,\n      decision,\n      reason,\n      ...extra,\n      safeToWrite: false\n    }\n  }];\n}\n\n// Verify canonical identity in both systems.\nconst matches = googleRows.filter(\n  row => row['Session ID'] === sessionId\n);\n\nif (\n  matches.length !== 1 ||\n  notion.id !== pending.notion_page_id\n) {\n  return result(\n    'REVIEW_IDENTITY',\n    'Google or Notion identity could not be verified'\n  );\n}\n\nconst googleDate = dateOnly(matches[0].Date);\n\nconst notionExternalId = (\n  notion.properties?.['Session External ID']\n    ?.rich_text ?? []\n).map(part => part.plain_text ?? part.text?.content ?? '')\n .join('').trim();\n\nconst notionDate = dateOnly(\n  notion.properties?.['Event Date']?.date?.start\n);\n\nif (\n  notionExternalId !== sessionId ||\n  !googleDate ||\n  !notionDate\n) {\n  return result(\n    'REVIEW_VALUES',\n    'Notion external ID or current dates are missing'\n  );\n}\n\n// Use recorded property-level events, not page timestamps,\n// to determine the latest known deliberate edit.\nconst dateEvents = history\n  .filter(e =>\n    e.external_id === sessionId &&\n    ['Google', 'Notion'].includes(e.origin) &&\n    (e.changed_fields ?? []).some(f =>\n      f.field === 'Date' ||\n      f.propertyName === 'Event Date'\n    ) &&\n    Number.isFinite(Date.parse(e.changed_at))\n  )\n  .sort((a, b) =>\n    Date.parse(b.changed_at) -\n    Date.parse(a.changed_at)\n  );\n\nif (!dateEvents.length) {\n  return result('REVIEW_HISTORY', 'No valid edit history');\n}\n\nconst latest = dateEvents[0];\nconst second = dateEvents[1] ?? null;\n\nconst latestField = latest.changed_fields.find(\n  f => f.field === 'Date' ||\n       f.propertyName === 'Event Date'\n);\n\nconst proposedDate = latest.origin === 'Google'\n  ? dateOnly(latestField.newValue)\n  : notionDate;\n\nconst sourceDate = latest.origin === 'Google'\n  ? googleDate\n  : notionDate;\n\nconst targetDate = latest.origin === 'Google'\n  ? notionDate\n  : googleDate;\n\nconst direction = latest.origin === 'Google'\n  ? 'GOOGLE_TO_NOTION'\n  : 'NOTION_TO_GOOGLE';\n\n// Reject equal-timestamp competing events.\nif (\n  second &&\n  Date.parse(second.changed_at) ===\n    Date.parse(latest.changed_at) &&\n  second.origin !== latest.origin\n) {\n  return result(\n    'REVIEW_ORDER',\n    'Competing edits have indistinguishable timestamps'\n  );\n}\n\nif (!proposedDate || sourceDate !== proposedDate) {\n  return result(\n    'REVIEW_SOURCE_CHANGED',\n    'Current source value does not match latest edit'\n  );\n}\n\n// Page timestamp is a conservative warning only.\n// It is not proof of a property-level edit.\nconst notionPageTime = Date.parse(\n  notion.last_edited_time\n);\n\nconst latestTime = Date.parse(latest.changed_at);\n\nif (\n  latest.origin === 'Google' &&\n  Number.isFinite(notionPageTime) &&\n  notionPageTime > latestTime\n) {\n  return result(\n    'REVIEW_LATER_NOTION_ACTIVITY',\n    'Notion page has activity newer than the Google edit'\n  );\n}\n\nreturn result(\n  targetDate === proposedDate\n    ? 'ALREADY_MATCHED'\n    : direction,\n  targetDate === proposedDate\n    ? 'Both systems already hold the proposed value'\n    : 'Latest recorded edit matches its current source value',\n  {\n    winningOrigin: latest.origin,\n    winningEventId: latest.id,\n    winningEventStatus: latest.status,\n    winningChangedAt: latest.changed_at,\n    proposedDate,\n    googleDate,\n    notionDate,\n    notionPageLastEdited: notion.last_edited_time,\n    requiresEligibilityApproval: latest.status === 'REVIEW',\n    requiresCurrentValueCheck: false\n  }\n);\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        432
+      ],
+      "id": "91c87370-ee6b-4f52-9d02-f3461dd020f9",
+      "name": "DEV — Decide Session Date Direction"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n/**\n * Stage 9 Pt. 3\n * Explicit DEV test approval — Notion to Google.\n */\n\nconst decision = $input.first().json;\n\nconst approved =\n  decision.sessionId === 'BR-S-000001' &&\n  String(decision.winningEventId) === '21' &&\n  decision.winningOrigin === 'Notion' &&\n  decision.winningEventStatus === 'RECEIVED' &&\n  decision.decision === 'NOTION_TO_GOOGLE' &&\n  decision.proposedDate === '2027-01-22' &&\n  decision.googleDate === '2027-01-20' &&\n  decision.notionDate === '2027-01-22' &&\n  decision.requiresEligibilityApproval === false;\n\nreturn [{\n  json: {\n    ...decision,\n    testApproved: approved,\n    approvalScope: approved\n      ? 'DEV_SINGLE_RECORD'\n      : 'NONE',\n    safeToWrite: false\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        432
+      ],
+      "id": "32b4d7c7-d4f7-49fc-b94a-5c1b71ad36f2",
+      "name": "DEV — Authorise Session Date Test"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nINSERT INTO sync_operations (\n    event_id,\n    entity_type,\n    external_id,\n    field_name,\n    target_system,\n    attempted_value,\n    status\n)\nSELECT\n    e.id,\n    'Session',\n    e.external_id,\n    'Date',\n    'Google',\n    to_jsonb($3::text),\n    'PENDING'\nFROM sync_events e\nWHERE e.id = $1::bigint\n  AND e.external_id = $2\n  AND e.entity_type = 'Session'\n  AND e.origin = 'Notion'\n  AND e.status = 'RECEIVED'\n  AND $4::boolean = true\n  AND $5 = 'NOTION_TO_GOOGLE'\n  AND $6 = 'DEV_SINGLE_RECORD'\n  AND $1::bigint = 21\n  AND $2 = 'BR-S-000001'\n  AND $3 = '2027-01-22'\n  AND EXISTS (\n      SELECT 1\n      FROM jsonb_array_elements(e.changed_fields) f\n      WHERE f->>'propertyName' = 'Event Date'\n        AND f->>'action' = 'SYNC_CANDIDATE'\n  )\n  AND NOT EXISTS (\n      SELECT 1\n      FROM sync_operations op\n      WHERE op.event_id = e.id\n        AND op.field_name = 'Date'\n        AND op.target_system = 'Google'\n  )\nRETURNING\n    id,\n    event_id,\n    external_id,\n    field_name,\n    target_system,\n    attempted_value,\n    status;\n",
+        "options": {
+          "queryReplacement": "={{ [   $json.winningEventId,   $json.sessionId,   $json.proposedDate,   $json.testApproved,   $json.decision,   $json.approvalScope ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1584,
+        432
+      ],
+      "id": "636dc712-4164-42fd-a09d-b30d774621c7",
+      "name": "DEV — Register Approved Session Date Operation",
+      "credentials": {
+        "postgres": {
+          "id": "hIT0FRvYYAMZYbxy",
+          "name": "DEV — BR Sync PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\n/**\n * Stage 9 Pt. 3 — Notion → Google writer gate\n * Explicit single-record DEV test.\n */\n\nconst operation = $input.first().json;\n\nconst decision = $('DEV — Authorise Session Date Test')\n  .first().json;\n\nconst pending = $('DEV — Read Pending Sync Events')\n  .all().map(i => i.json)\n  .find(e => String(e.id) === '21');\n\nconst notion = $('DEV — Verify Current Notion Session Date')\n  .first().json;\n\nconst google = $('DEV — Verify Current Google Session Date')\n  .first().json;\n\nconst notionDate =\n  notion.properties?.['Event Date']?.date?.start?.slice(0, 10);\n\nconst checks = {\n  approved: decision.testApproved === true,\n  scope: decision.approvalScope === 'DEV_SINGLE_RECORD',\n  direction: decision.decision === 'NOTION_TO_GOOGLE',\n  session: decision.sessionId === 'BR-S-000001',\n  event: String(operation.event_id) === '21',\n  operationPending: operation.status === 'PENDING',\n  target: operation.target_system === 'Google',\n  field: operation.field_name === 'Date',\n  identity:\n    operation.external_id === decision.sessionId &&\n    google['Session ID'] === decision.sessionId &&\n    notion.id === pending?.notion_page_id,\n  source:\n    notionDate === decision.proposedDate &&\n    decision.notionDate === decision.proposedDate,\n  targetValue: google.Date === decision.googleDate,\n  value: operation.attempted_value === decision.proposedDate,\n  changeRequired: decision.proposedDate !== decision.googleDate\n};\n\nconst authorised = Object.values(checks).every(Boolean);\n\nreturn [{\n  json: {\n    operationId: operation.id,\n    sessionId: decision.sessionId,\n    direction: decision.decision,\n    proposedDate: decision.proposedDate,\n    expectedPreviousDate: decision.googleDate,\n    checks,\n    decision: authorised\n      ? 'AUTHORISE_DEV_WRITE'\n      : 'HOLD_FOR_REVIEW',\n    safeToWrite: authorised,\n    failedChecks: Object.entries(checks)\n      .filter(([, passed]) => !passed)\n      .map(([name]) => name)\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        432
+      ],
+      "id": "87d3b6be-2764-4fa3-957f-f725e3701c0d",
+      "name": "DEV — Gate Session Date Write"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://api.notion.com/v1/pages/' + $json.notionPageId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2026-03-11"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  properties: {\n    \"Event Date\": {\n      date: {\n        start: $json.proposedDate\n      }\n    }\n  }\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1776,
+        32
+      ],
+      "id": "9335d44a-d3e8-4577-9cd0-d4b54633467b",
+      "name": "DEV — Apply Approved Notion Session Date",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "5YXlptJIstFSkMmt",
+          "name": "DEV — Notion API 2026"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "af0db906-7002-4a64-bb24-1e0a6533c186",
+              "leftValue": "={{ $json.safeToWrite === true && $json.decision === 'AUTHORISE_DEV_WRITE' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1792,
+        224
+      ],
+      "id": "e7fcae2a-af34-44b1-8440-fbad11fb4d63",
+      "name": "DEV — Session Date Write Authorised"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nWITH completed_operation AS (\n    UPDATE sync_operations\n    SET\n        status = 'SUCCESS',\n        completed_at = NOW(),\n        error_message = NULL\n    WHERE id = 1\n      AND event_id = 11\n      AND entity_type = 'Session'\n      AND external_id = 'BR-S-000001'\n      AND field_name = 'Date'\n      AND target_system = 'Notion'\n      AND attempted_value = to_jsonb('2027-01-20'::text)\n      AND status = 'PENDING'\n    RETURNING *\n),\nsaved_state AS (\n    INSERT INTO sync_field_state (\n        entity_type,\n        external_id,\n        field_name,\n        last_synced_value,\n        last_synced_at,\n        last_event_key\n    )\n    SELECT\n        'Session',\n        'BR-S-000001',\n        'Date',\n        to_jsonb('2027-01-20'::text),\n        NOW(),\n        e.event_key\n    FROM completed_operation op\n    JOIN sync_events e ON e.id = op.event_id\n    ON CONFLICT (entity_type, external_id, field_name)\n    DO UPDATE SET\n        last_synced_value = EXCLUDED.last_synced_value,\n        last_synced_at = EXCLUDED.last_synced_at,\n        last_event_key = EXCLUDED.last_event_key\n    RETURNING *\n),\nclosed_events AS (\n    UPDATE sync_events\n    SET\n        status = CASE\n            WHEN id = 11 THEN 'APPLIED'\n            WHEN id = 4 THEN 'IGNORED'\n        END,\n        processed_at = NOW()\n    WHERE id IN (4, 11)\n      AND entity_type = 'Session'\n      AND external_id = 'BR-S-000001'\n      AND EXISTS (SELECT 1 FROM saved_state)\n    RETURNING id, status\n)\nSELECT\n    (SELECT COUNT(*) FROM completed_operation)\n        AS operations_completed,\n    (SELECT COUNT(*) FROM saved_state)\n        AS field_states_saved,\n    (SELECT COUNT(*) FROM closed_events)\n        AS events_closed;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1792,
+        -144
+      ],
+      "id": "1fd279e0-3e00-4ed3-bae1-4d635a0b23d0",
+      "name": "DEV — Complete Session Date Operation",
+      "credentials": {
+        "postgres": {
+          "id": "hIT0FRvYYAMZYbxy",
+          "name": "DEV — BR Sync PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA",
+          "mode": "list",
+          "cachedResultName": "DEV VERSION Bible Facilitation Roster",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1904004001,
+          "mode": "list",
+          "cachedResultName": "Sessions — Sync",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit#gid=1904004001"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $json.proposedDate }}",
+            "Session ID": "={{ $json.sessionId }}"
+          },
+          "matchingColumns": [
+            "Session ID"
+          ],
+          "schema": [
+            {
+              "id": "Session ID",
+              "displayName": "Session ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reading Unit",
+              "displayName": "Reading Unit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Session Status",
+              "displayName": "Session Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2064,
+        208
+      ],
+      "id": "c9ddf69e-d1bc-4581-b13c-67da61bc5bc7",
+      "name": "DEV — Apply Approved Google Session Date",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YqyZKJ3DcH6BmSqN",
+          "name": "GoogleAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nWITH completed_operation AS (\n    UPDATE sync_operations\n    SET\n        status = 'SUCCESS',\n        completed_at = NOW(),\n        error_message = NULL\n    WHERE id = 2\n      AND event_id = 21\n      AND entity_type = 'Session'\n      AND external_id = 'BR-S-000001'\n      AND field_name = 'Date'\n      AND target_system = 'Google'\n      AND attempted_value = to_jsonb('2027-01-22'::text)\n      AND status = 'PENDING'\n    RETURNING *\n),\nsaved_state AS (\n    INSERT INTO sync_field_state (\n        entity_type,\n        external_id,\n        field_name,\n        last_synced_value,\n        last_synced_at,\n        last_event_key\n    )\n    SELECT\n        'Session',\n        'BR-S-000001',\n        'Date',\n        to_jsonb('2027-01-22'::text),\n        NOW(),\n        e.event_key\n    FROM completed_operation op\n    JOIN sync_events e ON e.id = op.event_id\n    ON CONFLICT (entity_type, external_id, field_name)\n    DO UPDATE SET\n        last_synced_value = EXCLUDED.last_synced_value,\n        last_synced_at = EXCLUDED.last_synced_at,\n        last_event_key = EXCLUDED.last_event_key\n    RETURNING *\n),\nclosed_event AS (\n    UPDATE sync_events\n    SET\n        status = 'APPLIED',\n        processed_at = NOW()\n    WHERE id = 21\n      AND entity_type = 'Session'\n      AND external_id = 'BR-S-000001'\n      AND EXISTS (SELECT 1 FROM saved_state)\n    RETURNING id\n)\nSELECT\n    (SELECT COUNT(*) FROM completed_operation)\n        AS operations_completed,\n    (SELECT COUNT(*) FROM saved_state)\n        AS field_states_saved,\n    (SELECT COUNT(*) FROM closed_event)\n        AS events_closed;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        2272,
+        208
+      ],
+      "id": "b68b8357-7939-4a3f-9a05-c71b844b8dd8",
+      "name": "DEV — Complete Google Session Date Operation",
+      "credentials": {
+        "postgres": {
+          "id": "hIT0FRvYYAMZYbxy",
+          "name": "DEV — BR Sync PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nWITH ledger AS (\n\n    -- All captured events\n    SELECT\n        'EVENT' AS record_type,\n        e.id AS record_id,\n        e.entity_type,\n        e.external_id,\n        e.origin AS source,\n        COALESCE((\n            SELECT string_agg(\n                COALESCE(\n                    f->>'field',\n                    f->>'propertyName',\n                    '?'\n                ) ||\n                CASE\n                    WHEN f ? 'newValue'\n                    THEN ' → ' || (f->>'newValue')\n                    ELSE ''\n                END,\n                ', '\n            )\n            FROM jsonb_array_elements(e.changed_fields) f\n        ), '') AS detail,\n        e.status,\n        e.changed_at AS activity_at,\n        e.processed_at AS completed_at\n    FROM sync_events e\n\n    UNION ALL\n\n    -- Synchronization write operations\n    SELECT\n        'OPERATION',\n        o.id,\n        o.entity_type,\n        o.external_id,\n        e.origin || ' → ' || o.target_system,\n        o.field_name || ' → ' ||\n            COALESCE(o.attempted_value #>> '{}', '?'),\n        o.status,\n        o.attempted_at,\n        o.completed_at\n    FROM sync_operations o\n    LEFT JOIN sync_events e ON e.id = o.event_id\n\n    UNION ALL\n\n    -- Latest successful shared field values\n    SELECT\n        'FIELD STATE',\n        NULL::bigint,\n        s.entity_type,\n        s.external_id,\n        'Google ↔ Notion',\n        s.field_name || ' = ' ||\n            COALESCE(s.last_synced_value #>> '{}', '?'),\n        'SYNCED',\n        s.last_synced_at,\n        s.last_synced_at\n    FROM sync_field_state s\n)\n\nSELECT\n    record_type,\n    record_id,\n    entity_type,\n    external_id,\n    source,\n    detail,\n    status,\n    activity_at,\n    completed_at\nFROM ledger\nORDER BY\n    activity_at DESC NULLS LAST,\n    record_type,\n    record_id DESC NULLS LAST;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        240,
+        592
+      ],
+      "id": "fd49a164-d7f2-4fa1-9250-48c397e138c3",
+      "name": "DEV Sync Ledger Overview",
+      "credentials": {
+        "postgres": {
+          "id": "hIT0FRvYYAMZYbxy",
+          "name": "DEV — BR Sync PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nUPDATE sync_events\nSET\n    status = 'IGNORED',\n    processed_at = NOW()\nWHERE id = 20\n  AND origin = 'Notion'\n  AND entity_type = 'Session'\n  AND external_id = 'BR-S-000001'\n  AND status = 'RECEIVED'\n  AND changed_at BETWEEN\n      '2026-11-04T14:39:00Z'::timestamptz\n      AND '2026-11-04T14:41:00Z'::timestamptz\nRETURNING\n    id,\n    event_key,\n    status,\n    processed_at;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        240,
+        368
+      ],
+      "id": "8c393d16-767c-4c49-9df0-e3b0b4bbcd83",
+      "name": "DEV — Allpurpose Ledger Querier",
+      "credentials": {
+        "postgres": {
+          "id": "hIT0FRvYYAMZYbxy",
+          "name": "DEV — BR Sync PostgreSQL"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n-dev.theologenius.com",
+            "user-agent": "notion-api",
+            "content-length": "677",
+            "accept-encoding": "gzip, br",
+            "baggage": "sentry-environment=production,sentry-release=20261103.2053-9eb8a37,sentry-public_key=1aac75005a2497650c71a85189d5aeca,sentry-trace_id=a617a2bc014e40c3a11dd143884505b0",
+            "cdn-loop": "cloudflare; loops=1",
+            "cf-connecting-ip": "131.149.232.134",
+            "cf-ipcountry": "US",
+            "cf-ray": "a550245cdaa0fef4-PDX",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-warp-tag-id": "040befd2-d01d-4759-9ac9-09c53c15b2aa",
+            "connection": "keep-alive",
+            "content-type": "application/json",
+            "sentry-trace": "a617a2bc014e40c3a11dd143884505b0-bdcc28b711c3de94",
+            "traceparent": "00-c503effd3d4e1358d863fc400627e7c6-a2701699230e37fb-00",
+            "x-forwarded-for": "131.149.232.134",
+            "x-forwarded-proto": "https",
+            "x-notion-signature": "sha256=93faa263240f587733901435e783f6b5008475ee26fa9225f2939d5ccf06ae07"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "7e83f8d8-10a8-470c-b3ed-e38a3723f4f9",
+            "timestamp": "2026-11-04T02:19:52.083Z",
+            "workspace_id": "ee71f2e7-a1f2-4765-95af-f1dbbf56b809",
+            "workspace_name": "Theologenius",
+            "subscription_id": "40ed872b-594c-819c-9bc0-0099ff2060eb",
+            "integration_id": "3dcd872b-594c-8165-a226-00379e129b3c",
+            "authors": [
+              {
+                "id": "5d3a0efd-09da-4389-9b25-671598374114",
+                "type": "person"
+              }
+            ],
+            "attempt_number": 1,
+            "api_version": "2026-03-11",
+            "entity": {
+              "id": "3eac267d-550f-8156-b1f3-ce4a290a06ac",
+              "type": "page"
+            },
+            "type": "page.properties_updated",
+            "data": {
+              "parent": {
+                "id": "0558f1d3-7100-4984-8649-5165c80c2e5e",
+                "type": "database",
+                "data_source_id": "655cf0f3-93cd-4d72-920a-ad0805d06242"
+              },
+              "updated_properties": [
+                "%3C%3CtM"
+              ]
+            }
+          },
+          "webhookUrl": "http://localhost:5678/webhook/dev-br-notion-changes",
+          "executionMode": "production"
+        },
+        "binary": {
+          "data": {
+            "data": "eyJpZCI6IjdlODNmOGQ4LTEwYTgtNDcwYy1iM2VkLWUzOGEzNzIzZjRmOSIsInRpbWVzdGFtcCI6IjIwMjYtMTEtMDRUMDI6MTk6NTIuMDgzWiIsIndvcmtzcGFjZV9pZCI6ImVlNzFmMmU3LWExZjItNDc2NS05NWFmLWYxZGJiZjU2YjgwOSIsIndvcmtzcGFjZV9uYW1lIjoiVGhlb2xvZ2VuaXVzIiwic3Vic2NyaXB0aW9uX2lkIjoiNDBlZDg3MmItNTk0Yy04MTljLTliYzAtMDA5OWZmMjA2MGViIiwiaW50ZWdyYXRpb25faWQiOiIzZGNkODcyYi01OTRjLTgxNjUtYTIyNi0wMDM3OWUxMjliM2MiLCJhdXRob3JzIjpbeyJpZCI6IjVkM2EwZWZkLTA5ZGEtNDM4OS05YjI1LTY3MTU5ODM3NDExNCIsInR5cGUiOiJwZXJzb24ifV0sImF0dGVtcHRfbnVtYmVyIjoxLCJhcGlfdmVyc2lvbiI6IjIwMjYtMDMtMTEiLCJlbnRpdHkiOnsiaWQiOiIzZWFjMjY3ZC01NTBmLTgxNTYtYjFmMy1jZTRhMjkwYTA2YWMiLCJ0eXBlIjoicGFnZSJ9LCJ0eXBlIjoicGFnZS5wcm9wZXJ0aWVzX3VwZGF0ZWQiLCJkYXRhIjp7InBhcmVudCI6eyJpZCI6IjA1NThmMWQzLTcxMDAtNDk4NC04NjQ5LTUxNjVjODBjMmU1ZSIsInR5cGUiOiJkYXRhYmFzZSIsImRhdGFfc291cmNlX2lkIjoiNjU1Y2YwZjMtOTNjZC00ZDcyLTkyMGEtYWQwODA1ZDA2MjQyIn0sInVwZGF0ZWRfcHJvcGVydGllcyI6WyIlM0MlM0N0TSJdfX0=",
+            "mimeType": "application/json"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "DEV — Verify Notion Signature HMAC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Verify Notion Signature HMAC": {
+      "main": [
+        [
+          {
+            "node": "DEV — Notion Signature Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Notion Signature Valid": {
+      "main": [
+        [
+          {
+            "node": "DEV — Identify Notion Change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Identify Notion Change": {
+      "main": [
+        [
+          {
+            "node": "DEV — Resolve Notion Property",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Resolve Notion Property": {
+      "main": [
+        [
+          {
+            "node": "DEV — Map Notion Property Names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Map Notion Property Names": {
+      "main": [
+        [
+          {
+            "node": "DEV — Classify Notion Sync Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Classify Notion Sync Fields": {
+      "main": [
+        [
+          {
+            "node": "DEV — Resolve Notion External ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Resolve Notion External ID": {
+      "main": [
+        [
+          {
+            "node": "DEV — Extract Notion External ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Extract Notion External ID": {
+      "main": [
+        [
+          {
+            "node": "DEV — Register Notion Sync Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Register Notion Sync Event": {
+      "main": [
+        [
+          {
+            "node": "DEV — Read Pending Sync Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Read Pending Sync Events": {
+      "main": [
+        [
+          {
+            "node": "DEV — Read Session Date Event History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Read Session Date Event History": {
+      "main": [
+        [
+          {
+            "node": "DEV — Evaluate Latest Session Date Edit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Evaluate Latest Session Date Edit": {
+      "main": [
+        [
+          {
+            "node": "DEV — Verify Current Google Session Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Verify Current Google Session Date": {
+      "main": [
+        [
+          {
+            "node": "DEV — Verify Current Notion Session Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Verify Current Notion Session Date": {
+      "main": [
+        [
+          {
+            "node": "DEV — Decide Session Date Direction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Decide Session Date Direction": {
+      "main": [
+        [
+          {
+            "node": "DEV — Authorise Session Date Test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Authorise Session Date Test": {
+      "main": [
+        [
+          {
+            "node": "DEV — Register Approved Session Date Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Register Approved Session Date Operation": {
+      "main": [
+        [
+          {
+            "node": "DEV — Gate Session Date Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Gate Session Date Write": {
+      "main": [
+        [
+          {
+            "node": "DEV — Session Date Write Authorised",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Session Date Write Authorised": {
+      "main": [
+        [
+          {
+            "node": "DEV — Apply Approved Notion Session Date",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DEV — Apply Approved Google Session Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Apply Approved Notion Session Date": {
+      "main": [
+        [
+          {
+            "node": "DEV — Complete Session Date Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Apply Approved Google Session Date": {
+      "main": [
+        [
+          {
+            "node": "DEV — Complete Google Session Date Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c0526770-cb63-4b81-928b-27f86e0bdd51",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a035d710f952601e58e2e394cc86b8497b51f348ba066183cfc9a59870092c9e"
+  },
+  "nodeGroups": [],
+  "id": "Us5p492KfMpWwWBk",
+  "tags": []
+}

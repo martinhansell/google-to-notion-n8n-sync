@@ -120,7 +120,7 @@
       "typeVersion": 2.3,
       "position": [
         832,
-        -16
+        -112
       ],
       "id": "ba627b81-d176-489a-92f1-8a6b48f89ab8",
       "name": "If"
@@ -157,6 +157,384 @@
           "name": "GoogleAuth"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const records = $input.all();\n\nfunction clean(value) {\n  return String(value ?? \"\").trim();\n}\n\nfunction dateOnly(value) {\n  if (!value) return \"\";\n  return clean(value).slice(0, 10);\n}\n\nreturn records.map(item => {\n  const r = item.json;\n  const sessionId = clean(r[\"Session ID\"]);\n  const eventDate = dateOnly(r.property_event_date?.start);\n\n  // DEV record titles:\n  // \"Reading Unit · Location · YYYY-MM-DD\"\n  const title = clean(r.property_event_instance || r.name);\n  const parts = title.split(\" · \");\n\n  const notionUnit = clean(\n    r.property_programme_item_name_helper?.[0] ||\n    (parts.length === 3 ? parts[0] : \"\")\n  );\n\n  const notionLocation = clean(\n    r.property_team_location_name_helper?.[0] ||\n    (parts.length === 3 ? parts[1] : \"\")\n  );\n\n  const fields = [\n    [\"Date\", dateOnly(r.Date), eventDate],\n    [\"Location\", clean(r.Location), notionLocation],\n    [\"Reading Unit\", clean(r[\"Reading Unit\"]), notionUnit],\n    [\"Session Status\",\n      clean(r[\"Session Status\"]),\n      clean(r.property_instance_status)]\n  ];\n\n  const differences = fields\n    .filter(([field, google, notion]) => google !== notion)\n    .map(([field, google, notion]) => ({\n      field, google, notion\n    }));\n\n  const valid = Boolean(\n    sessionId &&\n    sessionId === clean(r.property_session_external_id) &&\n    eventDate &&\n    notionUnit &&\n    notionLocation\n  );\n\n  return {\n    json: {\n      sessionId,\n      notionPageId: r.id,\n      valid,\n      result: !valid\n        ? \"REVIEW\"\n        : differences.length\n          ? \"DIFFERENT\"\n          : \"MATCH\",\n      differenceCount: differences.length,\n      differences\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        80
+      ],
+      "id": "e5661582-2af2-4f61-b1f1-c456862b0212",
+      "name": "DEV — Session Change Detection"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b426763c-e3aa-4027-a3fc-a760f4c18c09",
+              "leftValue": "={{ Boolean($json.valid && $json.differences.some(d => d.field === 'Date')) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        -48
+      ],
+      "id": "e3024e86-253d-4e7f-acdf-186d8b6e56e5",
+      "name": "DEV — Google Date Changed"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.notionPageId }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Event Date|date",
+              "range": "={{ $json.differences.find(d => d.field === 'Date').google }}",
+              "includeTime": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1408,
+        -176
+      ],
+      "id": "940b6218-030e-4af4-b165-591fc32b37c4",
+      "name": "DEV — Update Notion Session Date",
+      "credentials": {
+        "notionApi": {
+          "id": "MmgoekamXUObs774",
+          "name": "Notion Theologenius"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/pages/{{ $json.notionPageId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=\n{{ JSON.stringify({\n  properties: {\n    \"Event Date\": {\n      date: {\n        start: $json.differences.find(\n          d => d.field === \"Date\"\n        ).google\n      }\n    }\n  }\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1408,
+        64
+      ],
+      "id": "28903c08-1065-4b10-a4cf-77d5a80bf71f",
+      "name": "DEV — PATCH Notion Session Date",
+      "credentials": {
+        "notionApi": {
+          "id": "MmgoekamXUObs774",
+          "name": "Notion Theologenius"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fe7e15a4-62dc-4326-af6a-579b6d5b5826",
+              "leftValue": "={{ Boolean($json.valid && $json.differences.some(d => d.field === 'Date' && d.notion === '2027-01-14')) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1136,
+        320
+      ],
+      "id": "28b41869-30e1-4007-bc8c-d5718486e7da",
+      "name": "DEV — Notion Date Changed"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA",
+          "mode": "list",
+          "cachedResultName": "DEV VERSION Bible Facilitation Roster",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1811042601,
+          "mode": "list",
+          "cachedResultName": "SyncChangeLog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit#gid=1811042601"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        400,
+        304
+      ],
+      "id": "afc934c6-7964-4b20-8c10-4817f5d42bb1",
+      "name": "DEV — Read Google Change Log",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YqyZKJ3DcH6BmSqN",
+          "name": "GoogleAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const changes = $input.all();\n\nconst sessionDates = changes\n  .map(item => item.json)\n  .filter(r =>\n    r.Entity === \"Session\" &&\n    r.Field === \"Date\" &&\n    r.Origin === \"Google\" &&\n    /^BR-S-\\d{6}$/.test(String(r[\"External ID\"] ?? \"\")) &&\n    /^\\d{4}-\\d{2}-\\d{2}$/.test(String(r[\"New Value\"] ?? \"\")) &&\n    !Number.isNaN(Date.parse(r[\"Changed At\"]))\n  )\n  .sort((a, b) =>\n    Date.parse(b[\"Changed At\"]) -\n    Date.parse(a[\"Changed At\"]) ||\n    Number(b.row_number) - Number(a.row_number)\n  );\n\nconst latestBySession = new Map();\n\nfor (const change of sessionDates) {\n  const id = change[\"External ID\"];\n\n  if (!latestBySession.has(id)) {\n    latestBySession.set(id, {\n      sessionId: id,\n      field: \"Date\",\n      proposedValue: change[\"New Value\"],\n      changedAt: change[\"Changed At\"],\n      origin: \"Google\",\n      logRow: change.row_number\n    });\n  }\n}\n\nreturn [...latestBySession.values()]\n  .map(record => ({ json: record }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        304
+      ],
+      "id": "14b5b01e-4c3d-41ca-b989-d51fb0d5ae02",
+      "name": "DEV — Select Google Session Date Changes"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        832,
+        288
+      ],
+      "id": "9df63c7b-6ade-4c6b-bacf-8e7d6d95600e",
+      "name": "DEV — Join Session Changes"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst items = $input.all().map(i => i.json);\n\n// Existing session comparisons\nconst comparisons = items.filter(r =>\n  r.sessionId &&\n  r.notionPageId &&\n  Array.isArray(r.differences)\n);\n\n// Google edit records\nconst edits = items.filter(r =>\n  r.sessionId &&\n  r.field === \"Date\" &&\n  r.origin === \"Google\" &&\n  r.changedAt\n);\n\nconst latestEditById = new Map();\n\nfor (const edit of edits) {\n  const previous = latestEditById.get(edit.sessionId);\n\n  if (!previous ||\n      Date.parse(edit.changedAt) >\n      Date.parse(previous.changedAt)) {\n    latestEditById.set(edit.sessionId, edit);\n  }\n}\n\nconst results = [];\n\nfor (const session of comparisons) {\n  const difference = session.differences.find(\n    d => d.field === \"Date\"\n  );\n\n  if (!difference) continue;\n\n  const googleEdit = latestEditById.get(\n    session.sessionId\n  );\n\n  const matchesLoggedEdit = Boolean(\n    googleEdit &&\n    googleEdit.proposedValue === difference.google\n  );\n\n  results.push({\n    json: {\n      sessionId: session.sessionId,\n      notionPageId: session.notionPageId,\n      googleDate: difference.google,\n      notionDate: difference.notion,\n      googleChangedAt: googleEdit?.changedAt ?? null,\n      googleLogRow: googleEdit?.logRow ?? null,\n      matchesLoggedEdit,\n      decision: !session.valid\n        ? \"REVIEW\"\n        : matchesLoggedEdit\n          ? \"GOOGLE_CHANGE_IDENTIFIED\"\n          : \"ORIGIN_UNRESOLVED\",\n      safeToWrite: false\n    }\n  });\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        528
+      ],
+      "id": "5c548416-4225-4be6-b950-6b47c560242d",
+      "name": "DEV — Evaluate Session Date Origin"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.notion.com/v1/pages/{{ $json.notionPageId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1136,
+        528
+      ],
+      "id": "55e22c64-5b92-47fe-864f-f69ae819f250",
+      "name": "DEV — Read Notion Session Metadata",
+      "credentials": {
+        "notionApi": {
+          "id": "MmgoekamXUObs774",
+          "name": "Notion Theologenius"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA",
+          "mode": "list",
+          "cachedResultName": "DEV VERSION Bible Facilitation Roster",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1904004001,
+          "mode": "list",
+          "cachedResultName": "Sessions — Sync",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bXkN49Z9rTkfXaHrZ5PaIB2uqRG9qfk4Qhc3JyORrKA/edit#gid=1904004001"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Session ID": "={{ $json.sessionId }}",
+            "Date": "={{ $json.differences.find(d => d.field === 'Date').notion }}"
+          },
+          "matchingColumns": [
+            "Session ID"
+          ],
+          "schema": [
+            {
+              "id": "Session ID",
+              "displayName": "Session ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reading Unit",
+              "displayName": "Reading Unit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Session Status",
+              "displayName": "Session Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1424,
+        304
+      ],
+      "id": "ec66c292-377c-4333-9ef9-362b357dd256",
+      "name": "DEV — Update Google Session Date",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YqyZKJ3DcH6BmSqN",
+          "name": "GoogleAuth"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "\n/**\n * DEV — Prepare Google Events\n *\n * Converts SyncChangeLog entries into\n * PostgreSQL-ready event records.\n *\n * No writes or synchronisation decisions.\n */\n\nconst rows = $input.all();\n\nconst ENTITIES = new Set([\n  \"Session\",\n  \"Assignment\",\n  \"Facilitator\"\n]);\n\nreturn rows.map(item => {\n  const r = item.json;\n\n  const eventId = String(r[\"Event ID\"] ?? \"\").trim();\n  const entityType = String(r.Entity ?? \"\").trim();\n  const externalId = String(r[\"External ID\"] ?? \"\").trim();\n  const field = String(r.Field ?? \"\").trim();\n  const changedAt = String(r[\"Changed At\"] ?? \"\").trim();\n\n  const valid = Boolean(\n    /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(eventId) &&\n    ENTITIES.has(entityType) &&\n    /^BR-[SAF]-\\d{6}$/.test(externalId) &&\n    field &&\n    changedAt &&\n    !Number.isNaN(Date.parse(changedAt))\n  );\n\n  return {\n    json: {\n      eventKey: eventId,\n      origin: \"Google\",\n      entityType,\n      externalId,\n      notionPageId: null,\n      changedAt,\n\n      changedFields: [{\n        field,\n        newValue: r[\"New Value\"] ?? null,\n        previousValue: r[\"Previous Value\"] ?? null\n      }],\n\n      sourceRow: r.row_number,\n      sourceCell: r.Cell ?? null,\n\n      valid,\n      status: \"REVIEW\",\n      safeToWrite: false\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        720
+      ],
+      "id": "03a3ac70-b216-451b-9146-6d59371d6bbc",
+      "name": "DEV — Prepare Google Events"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nINSERT INTO sync_events (\n    event_key,\n    origin,\n    entity_type,\n    external_id,\n    notion_page_id,\n    changed_at,\n    changed_fields,\n    event_payload,\n    status\n)\nVALUES (\n    $1,\n    'Google',\n    $2,\n    $3,\n    NULL,\n    $4::timestamptz,\n    $5::jsonb,\n    $6::jsonb,\n    'REVIEW'\n)\nON CONFLICT (event_key) DO NOTHING\nRETURNING id, event_key, external_id, status;\n",
+        "options": {
+          "queryReplacement": "= {{ [   $json.eventKey,   $json.entityType,   $json.externalId,   $json.changedAt,   JSON.stringify($json.changedFields),   JSON.stringify($json) ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        848,
+        720
+      ],
+      "id": "e15c249a-f1af-4b74-b0a2-7359f091d5ab",
+      "name": "DEV — Register Google Sync Events",
+      "credentials": {
+        "postgres": {
+          "id": "hIT0FRvYYAMZYbxy",
+          "name": "DEV — BR Sync PostgreSQL"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -171,6 +549,11 @@
           },
           {
             "node": "Get many database pages",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DEV — Read Google Change Log",
             "type": "main",
             "index": 0
           }
@@ -195,6 +578,11 @@
             "node": "If",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "DEV — Session Change Detection",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -209,6 +597,114 @@
           }
         ]
       ]
+    },
+    "DEV — Session Change Detection": {
+      "main": [
+        [
+          {
+            "node": "DEV — Google Date Changed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DEV — Notion Date Changed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DEV — Join Session Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Google Date Changed": {
+      "main": [
+        [
+          {
+            "node": "DEV — Update Notion Session Date",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DEV — PATCH Notion Session Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Notion Date Changed": {
+      "main": [
+        [
+          {
+            "node": "DEV — Update Google Session Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Read Google Change Log": {
+      "main": [
+        [
+          {
+            "node": "DEV — Select Google Session Date Changes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DEV — Prepare Google Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Select Google Session Date Changes": {
+      "main": [
+        [
+          {
+            "node": "DEV — Join Session Changes",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "DEV — Join Session Changes": {
+      "main": [
+        [
+          {
+            "node": "DEV — Evaluate Session Date Origin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Evaluate Session Date Origin": {
+      "main": [
+        [
+          {
+            "node": "DEV — Read Notion Session Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEV — Prepare Google Events": {
+      "main": [
+        [
+          {
+            "node": "DEV — Register Google Sync Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -217,7 +713,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "c7d0b074-1c16-4ea6-8a7c-83e6696da10d",
+  "versionId": "fbf0c442-6176-4744-a64f-6c69b55fd890",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "a035d710f952601e58e2e394cc86b8497b51f348ba066183cfc9a59870092c9e"
