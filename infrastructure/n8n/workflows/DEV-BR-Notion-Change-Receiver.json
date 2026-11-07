@@ -218,7 +218,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "\nSELECT\n    id,\n    event_key,\n    origin,\n    entity_type,\n    external_id,\n    notion_page_id,\n    changed_at,\n    changed_fields,\n    status\nFROM sync_events\nWHERE status = 'RECEIVED'\n  AND entity_type = 'Session'\n  AND external_id ~ '^BR-S-[0-9]{6}$'\n  AND origin = 'Notion'\n  AND EXISTS (\n      SELECT 1\n      FROM jsonb_array_elements(changed_fields) AS f\n      WHERE f->>'propertyName' = 'Event Date'\n        AND f->>'action' = 'SYNC_CANDIDATE'\n  )\nORDER BY changed_at ASC, id ASC\nLIMIT 10;\n",
+        "query": "\nWITH candidates AS (\n    SELECT\n        e.id,\n        e.event_key,\n        e.origin,\n        e.entity_type,\n        e.external_id,\n        e.notion_page_id,\n        e.changed_at,\n        e.changed_fields,\n        e.status\n    FROM sync_events e\n    WHERE e.status = 'RECEIVED'\n      AND e.entity_type = 'Session'\n      AND e.external_id ~ '^BR-S-[0-9]{6}$'\n      AND (\n          (\n              e.origin = 'Notion'\n              AND EXISTS (\n                  SELECT 1\n                  FROM jsonb_array_elements(e.changed_fields) f\n                  WHERE f->>'propertyName' = 'Event Date'\n                    AND f->>'action' = 'SYNC_CANDIDATE'\n              )\n          )\n          OR\n          (\n              e.origin = 'Google'\n              AND EXISTS (\n                  SELECT 1\n                  FROM jsonb_array_elements(e.changed_fields) f\n                  WHERE f->>'field' = 'Date'\n                    AND f->>'newValue' IS NOT NULL\n              )\n          )\n      )\n),\nresolved AS (\n    SELECT\n        c.*,\n        (\n            SELECT MIN(h.notion_page_id)\n            FROM sync_events h\n            WHERE h.entity_type = 'Session'\n              AND h.external_id = c.external_id\n              AND h.notion_page_id IS NOT NULL\n            HAVING COUNT(DISTINCT h.notion_page_id) = 1\n        ) AS historical_notion_page_id\n    FROM candidates c\n)\nSELECT\n    id,\n    event_key,\n    origin,\n    entity_type,\n    external_id,\n    COALESCE(\n        notion_page_id,\n        historical_notion_page_id\n    ) AS notion_page_id,\n    changed_at,\n    changed_fields,\n    status\nFROM resolved\nWHERE COALESCE(\n    notion_page_id,\n    historical_notion_page_id\n) IS NOT NULL\nORDER BY changed_at ASC, id ASC\nLIMIT 1;\n",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -261,7 +261,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst events = $input.all().map(i => i.json);\n\nconst sorted = events\n  .filter(e =>\n    e.external_id === \"BR-S-000001\" &&\n    [\"Google\", \"Notion\"].includes(e.origin) &&\n    !Number.isNaN(Date.parse(e.changed_at))\n  )\n  .sort((a, b) =>\n    Date.parse(b.changed_at) -\n    Date.parse(a.changed_at)\n  );\n\nif (!sorted.length) {\n  return [{\n    json: {\n      decision: \"REVIEW_NO_HISTORY\",\n      safeToWrite: false\n    }\n  }];\n}\n\nconst latest = sorted[0];\n\nconst dateField = (latest.changed_fields ?? [])\n  .find(f =>\n    f.field === \"Date\" ||\n    f.propertyName === \"Event Date\"\n  );\n\nreturn [{\n  json: {\n    sessionId: latest.external_id,\n    latestEventId: latest.id,\n    latestOrigin: latest.origin,\n    latestChangedAt: latest.changed_at,\n    proposedDate: dateField?.newValue ?? null,\n    decision: latest.origin === \"Google\"\n      ? \"GOOGLE_LATEST_RECORDED_EDIT\"\n      : \"NOTION_LATEST_RECORDED_EDIT\",\n    requiresCurrentValueCheck: true,\n    safeToWrite: false\n  }\n}];\n"
+        "jsCode": "\nconst pending = $('DEV — Read Pending Sync Events').first().json;\nconst sessionId = pending.external_id;\n\nconst events = $input.all()\n  .map(item => item.json)\n  .filter(e =>\n    e.external_id === sessionId &&\n    ['Google', 'Notion'].includes(e.origin) &&\n    !Number.isNaN(Date.parse(e.changed_at))\n  )\n  .sort((a, b) =>\n    Date.parse(b.changed_at) - Date.parse(a.changed_at)\n  );\n\nif (!events.length) {\n  return [{\n    json: {\n      sessionId,\n      decision: 'REVIEW_NO_HISTORY',\n      safeToWrite: false\n    }\n  }];\n}\n\nconst latest = events[0];\n\nconst dateField = (latest.changed_fields ?? [])\n  .find(f =>\n    f.field === 'Date' ||\n    f.propertyName === 'Event Date'\n  );\n\nreturn [{\n  json: {\n    sessionId,\n    latestEventId: latest.id,\n    latestOrigin: latest.origin,\n    latestChangedAt: latest.changed_at,\n    proposedDate: dateField?.newValue ?? null,\n    decision: latest.origin === 'Google'\n      ? 'GOOGLE_LATEST_RECORDED_EDIT'\n      : 'NOTION_LATEST_RECORDED_EDIT',\n    requiresCurrentValueCheck: true,\n    safeToWrite: false\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -359,7 +359,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\n/**\n * Stage 9 Pt. 3\n * Explicit DEV test approval — Notion to Google.\n */\n\nconst decision = $input.first().json;\n\nconst approved =\n  decision.sessionId === 'BR-S-000001' &&\n  String(decision.winningEventId) === '21' &&\n  decision.winningOrigin === 'Notion' &&\n  decision.winningEventStatus === 'RECEIVED' &&\n  decision.decision === 'NOTION_TO_GOOGLE' &&\n  decision.proposedDate === '2027-01-22' &&\n  decision.googleDate === '2027-01-20' &&\n  decision.notionDate === '2027-01-22' &&\n  decision.requiresEligibilityApproval === false;\n\nreturn [{\n  json: {\n    ...decision,\n    testApproved: approved,\n    approvalScope: approved\n      ? 'DEV_SINGLE_RECORD'\n      : 'NONE',\n    safeToWrite: false\n  }\n}];\n"
+        "jsCode": "\nconst d = $input.first().json;\n\nconst approved =\n  /^BR-S-\\d{6}$/.test(d.sessionId ?? '') &&\n  /^\\d+$/.test(String(d.winningEventId ?? '')) &&\n  d.winningEventStatus === 'RECEIVED' &&\n  (\n    (d.decision === 'GOOGLE_TO_NOTION' &&\n     d.winningOrigin === 'Google') ||\n    (d.decision === 'NOTION_TO_GOOGLE' &&\n     d.winningOrigin === 'Notion')\n  ) &&\n  /^\\d{4}-\\d{2}-\\d{2}$/.test(d.proposedDate ?? '') &&\n  d.googleDate !== d.notionDate &&\n  d.requiresEligibilityApproval === false &&\n  d.requiresCurrentValueCheck === false;\n\nreturn [{\n  json: {\n    ...d,\n    testApproved: approved,\n    approvalScope: approved\n      ? 'DEV_ELIGIBLE_SESSION_DATE'\n      : 'NONE',\n    safeToWrite: false\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -373,7 +373,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "\nINSERT INTO sync_operations (\n    event_id,\n    entity_type,\n    external_id,\n    field_name,\n    target_system,\n    attempted_value,\n    status\n)\nSELECT\n    e.id,\n    'Session',\n    e.external_id,\n    'Date',\n    'Google',\n    to_jsonb($3::text),\n    'PENDING'\nFROM sync_events e\nWHERE e.id = $1::bigint\n  AND e.external_id = $2\n  AND e.entity_type = 'Session'\n  AND e.origin = 'Notion'\n  AND e.status = 'RECEIVED'\n  AND $4::boolean = true\n  AND $5 = 'NOTION_TO_GOOGLE'\n  AND $6 = 'DEV_SINGLE_RECORD'\n  AND $1::bigint = 21\n  AND $2 = 'BR-S-000001'\n  AND $3 = '2027-01-22'\n  AND EXISTS (\n      SELECT 1\n      FROM jsonb_array_elements(e.changed_fields) f\n      WHERE f->>'propertyName' = 'Event Date'\n        AND f->>'action' = 'SYNC_CANDIDATE'\n  )\n  AND NOT EXISTS (\n      SELECT 1\n      FROM sync_operations op\n      WHERE op.event_id = e.id\n        AND op.field_name = 'Date'\n        AND op.target_system = 'Google'\n  )\nRETURNING\n    id,\n    event_id,\n    external_id,\n    field_name,\n    target_system,\n    attempted_value,\n    status;\n",
+        "query": "\nINSERT INTO sync_operations (\n    event_id,\n    entity_type,\n    external_id,\n    field_name,\n    target_system,\n    attempted_value,\n    status\n)\nSELECT\n    e.id,\n    'Session',\n    e.external_id,\n    'Date',\n    CASE\n        WHEN e.origin = 'Notion' THEN 'Google'\n        WHEN e.origin = 'Google' THEN 'Notion'\n    END,\n    to_jsonb($3::text),\n    'PENDING'\nFROM sync_events e\nWHERE e.id = $1::bigint\n  AND e.external_id = $2\n  AND e.entity_type = 'Session'\n  AND e.status = 'RECEIVED'\n  AND $4::boolean = true\n  AND $5 IN ('NOTION_TO_GOOGLE', 'GOOGLE_TO_NOTION')\n  AND $6 = 'DEV_ELIGIBLE_SESSION_DATE'\n  AND (\n      (e.origin = 'Notion'\n       AND $5 = 'NOTION_TO_GOOGLE'\n       AND EXISTS (\n           SELECT 1\n           FROM jsonb_array_elements(e.changed_fields) f\n           WHERE f->>'propertyName' = 'Event Date'\n             AND f->>'action' = 'SYNC_CANDIDATE'\n       ))\n      OR\n      (e.origin = 'Google'\n       AND $5 = 'GOOGLE_TO_NOTION'\n       AND EXISTS (\n           SELECT 1\n           FROM jsonb_array_elements(e.changed_fields) f\n           WHERE f->>'field' = 'Date'\n             AND f->>'newValue' = $3\n       ))\n  )\n  AND NOT EXISTS (\n      SELECT 1\n      FROM sync_operations op\n      WHERE op.event_id = e.id\n        AND op.field_name = 'Date'\n  )\nRETURNING\n    id,\n    event_id,\n    external_id,\n    field_name,\n    target_system,\n    attempted_value,\n    status;\n",
         "options": {
           "queryReplacement": "={{ [   $json.winningEventId,   $json.sessionId,   $json.proposedDate,   $json.testApproved,   $json.decision,   $json.approvalScope ] }}"
         }
@@ -381,7 +381,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.7,
       "position": [
-        1584,
+        1600,
         432
       ],
       "id": "636dc712-4164-42fd-a09d-b30d774621c7",
@@ -395,13 +395,13 @@
     },
     {
       "parameters": {
-        "jsCode": "\n/**\n * Stage 9 Pt. 3 — Notion → Google writer gate\n * Explicit single-record DEV test.\n */\n\nconst operation = $input.first().json;\n\nconst decision = $('DEV — Authorise Session Date Test')\n  .first().json;\n\nconst pending = $('DEV — Read Pending Sync Events')\n  .all().map(i => i.json)\n  .find(e => String(e.id) === '21');\n\nconst notion = $('DEV — Verify Current Notion Session Date')\n  .first().json;\n\nconst google = $('DEV — Verify Current Google Session Date')\n  .first().json;\n\nconst notionDate =\n  notion.properties?.['Event Date']?.date?.start?.slice(0, 10);\n\nconst checks = {\n  approved: decision.testApproved === true,\n  scope: decision.approvalScope === 'DEV_SINGLE_RECORD',\n  direction: decision.decision === 'NOTION_TO_GOOGLE',\n  session: decision.sessionId === 'BR-S-000001',\n  event: String(operation.event_id) === '21',\n  operationPending: operation.status === 'PENDING',\n  target: operation.target_system === 'Google',\n  field: operation.field_name === 'Date',\n  identity:\n    operation.external_id === decision.sessionId &&\n    google['Session ID'] === decision.sessionId &&\n    notion.id === pending?.notion_page_id,\n  source:\n    notionDate === decision.proposedDate &&\n    decision.notionDate === decision.proposedDate,\n  targetValue: google.Date === decision.googleDate,\n  value: operation.attempted_value === decision.proposedDate,\n  changeRequired: decision.proposedDate !== decision.googleDate\n};\n\nconst authorised = Object.values(checks).every(Boolean);\n\nreturn [{\n  json: {\n    operationId: operation.id,\n    sessionId: decision.sessionId,\n    direction: decision.decision,\n    proposedDate: decision.proposedDate,\n    expectedPreviousDate: decision.googleDate,\n    checks,\n    decision: authorised\n      ? 'AUTHORISE_DEV_WRITE'\n      : 'HOLD_FOR_REVIEW',\n    safeToWrite: authorised,\n    failedChecks: Object.entries(checks)\n      .filter(([, passed]) => !passed)\n      .map(([name]) => name)\n  }\n}];\n"
+        "jsCode": "\n/**\n * Stage 9 — Reusable Session Date writer gate\n * DEV only; processes one selected event.\n */\n\nconst operation = $input.first().json;\nconst approval = $('DEV — Authorise Session Date Test').first().json;\n\nconst history = $('DEV — Read Session Date Event History')\n  .all().map(item => item.json);\n\nconst googleRows = $('DEV — Verify Current Google Session Date')\n  .all().map(item => item.json);\n\nconst notion = $('DEV — Verify Current Notion Session Date')\n  .first().json;\n\nconst event = history.find(e =>\n  String(e.id) === String(approval.winningEventId)\n);\n\nconst matches = googleRows.filter(g =>\n  g['Session ID'] === approval.sessionId\n);\n\nconst google = matches.length === 1 ? matches[0] : null;\n\nconst dateOnly = value =>\n  typeof value === 'string' ? value.slice(0, 10) : null;\n\nconst googleDate = dateOnly(google?.Date);\nconst notionDate = dateOnly(\n  notion.properties?.['Event Date']?.date?.start\n);\n\nconst notionExternalId = (\n  notion.properties?.['Session External ID']?.rich_text ?? []\n).map(t => t.plain_text ?? t.text?.content ?? '')\n .join('').trim();\n\nconst direction = approval.decision;\n\nconst targetSystem =\n  direction === 'GOOGLE_TO_NOTION' ? 'Notion' :\n  direction === 'NOTION_TO_GOOGLE' ? 'Google' :\n  null;\n\nconst sourceDate =\n  direction === 'GOOGLE_TO_NOTION' ? googleDate :\n  direction === 'NOTION_TO_GOOGLE' ? notionDate :\n  null;\n\nconst targetDate =\n  direction === 'GOOGLE_TO_NOTION' ? notionDate :\n  direction === 'NOTION_TO_GOOGLE' ? googleDate :\n  null;\n\nconst expectedTargetDate =\n  direction === 'GOOGLE_TO_NOTION'\n    ? approval.notionDate\n    : approval.googleDate;\n\nconst checks = {\n  approved: approval.testApproved === true,\n\n  scope:\n    approval.approvalScope === 'DEV_ELIGIBLE_SESSION_DATE',\n\n  session:\n    /^BR-S-\\d{6}$/.test(approval.sessionId ?? ''),\n\n  event:\n    !!event &&\n    String(operation.event_id) === String(event.id) &&\n    event.status === 'RECEIVED',\n\n  operationPending: operation.status === 'PENDING',\n\n  target: operation.target_system === targetSystem,\n\n  field: operation.field_name === 'Date',\n\n  identity:\n    operation.external_id === approval.sessionId &&\n    google?.['Session ID'] === approval.sessionId &&\n    notionExternalId === approval.sessionId,\n\n  origin:\n    event?.origin === approval.winningOrigin,\n\n  source:\n    sourceDate === approval.proposedDate,\n\n  targetValue:\n    targetDate === expectedTargetDate,\n\n  value:\n    operation.attempted_value === approval.proposedDate,\n\n  changeRequired:\n    sourceDate !== targetDate\n};\n\nconst authorised = Object.values(checks).every(Boolean);\n\nreturn [{\n  json: {\n    operationId: operation.id,\n    eventId: operation.event_id,\n    sessionId: approval.sessionId,\n    notionPageId: notion.id,\n    direction,\n    targetSystem,\n    proposedDate: approval.proposedDate,\n    expectedPreviousDate: expectedTargetDate,\n    checks,\n    decision: authorised\n      ? 'AUTHORISE_DEV_WRITE'\n      : 'HOLD_FOR_REVIEW',\n    safeToWrite: authorised,\n    failedChecks: Object.entries(checks)\n      .filter(([, passed]) => !passed)\n      .map(([name]) => name)\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1792,
-        432
+        1600,
+        224
       ],
       "id": "87d3b6be-2764-4fa3-957f-f725e3701c0d",
       "name": "DEV — Gate Session Date Write"
@@ -429,8 +429,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1776,
-        32
+        2128,
+        -96
       ],
       "id": "9335d44a-d3e8-4577-9cd0-d4b54633467b",
       "name": "DEV — Apply Approved Notion Session Date",
@@ -478,14 +478,16 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "\nWITH completed_operation AS (\n    UPDATE sync_operations\n    SET\n        status = 'SUCCESS',\n        completed_at = NOW(),\n        error_message = NULL\n    WHERE id = 1\n      AND event_id = 11\n      AND entity_type = 'Session'\n      AND external_id = 'BR-S-000001'\n      AND field_name = 'Date'\n      AND target_system = 'Notion'\n      AND attempted_value = to_jsonb('2027-01-20'::text)\n      AND status = 'PENDING'\n    RETURNING *\n),\nsaved_state AS (\n    INSERT INTO sync_field_state (\n        entity_type,\n        external_id,\n        field_name,\n        last_synced_value,\n        last_synced_at,\n        last_event_key\n    )\n    SELECT\n        'Session',\n        'BR-S-000001',\n        'Date',\n        to_jsonb('2027-01-20'::text),\n        NOW(),\n        e.event_key\n    FROM completed_operation op\n    JOIN sync_events e ON e.id = op.event_id\n    ON CONFLICT (entity_type, external_id, field_name)\n    DO UPDATE SET\n        last_synced_value = EXCLUDED.last_synced_value,\n        last_synced_at = EXCLUDED.last_synced_at,\n        last_event_key = EXCLUDED.last_event_key\n    RETURNING *\n),\nclosed_events AS (\n    UPDATE sync_events\n    SET\n        status = CASE\n            WHEN id = 11 THEN 'APPLIED'\n            WHEN id = 4 THEN 'IGNORED'\n        END,\n        processed_at = NOW()\n    WHERE id IN (4, 11)\n      AND entity_type = 'Session'\n      AND external_id = 'BR-S-000001'\n      AND EXISTS (SELECT 1 FROM saved_state)\n    RETURNING id, status\n)\nSELECT\n    (SELECT COUNT(*) FROM completed_operation)\n        AS operations_completed,\n    (SELECT COUNT(*) FROM saved_state)\n        AS field_states_saved,\n    (SELECT COUNT(*) FROM closed_events)\n        AS events_closed;\n",
-        "options": {}
+        "query": "\nWITH completed_operation AS (\n    UPDATE sync_operations\n    SET\n        status = 'SUCCESS',\n        completed_at = NOW(),\n        error_message = NULL\n    WHERE id = $1::bigint\n      AND event_id = $2::bigint\n      AND entity_type = 'Session'\n      AND external_id = $3\n      AND field_name = 'Date'\n      AND target_system = 'Notion'\n      AND attempted_value = to_jsonb($4::text)\n      AND status = 'PENDING'\n      AND $5 = $6\n      AND $7 = $4\n    RETURNING *\n),\nsaved_state AS (\n    INSERT INTO sync_field_state (\n        entity_type,\n        external_id,\n        field_name,\n        last_synced_value,\n        last_synced_at,\n        last_event_key\n    )\n    SELECT\n        op.entity_type,\n        op.external_id,\n        op.field_name,\n        op.attempted_value,\n        NOW(),\n        e.event_key\n    FROM completed_operation op\n    JOIN sync_events e ON e.id = op.event_id\n    WHERE e.origin = 'Google'\n      AND e.status = 'RECEIVED'\n    ON CONFLICT (entity_type, external_id, field_name)\n    DO UPDATE SET\n        last_synced_value = EXCLUDED.last_synced_value,\n        last_synced_at = EXCLUDED.last_synced_at,\n        last_event_key = EXCLUDED.last_event_key\n    RETURNING *\n),\nclosed_event AS (\n    UPDATE sync_events\n    SET\n        status = 'APPLIED',\n        processed_at = NOW()\n    WHERE id = $2::bigint\n      AND entity_type = 'Session'\n      AND external_id = $3\n      AND status = 'RECEIVED'\n      AND EXISTS (SELECT 1 FROM saved_state)\n    RETURNING id\n)\nSELECT\n    (SELECT COUNT(*) FROM completed_operation)\n        AS operations_completed,\n    (SELECT COUNT(*) FROM saved_state)\n        AS field_states_saved,\n    (SELECT COUNT(*) FROM closed_event)\n        AS events_closed;\n",
+        "options": {
+          "queryReplacement": "=\n{{ [\n  $('DEV — Gate Session Date Write').first().json.operationId,\n  $('DEV — Gate Session Date Write').first().json.eventId,\n  $('DEV — Gate Session Date Write').first().json.sessionId,\n  $('DEV — Gate Session Date Write').first().json.proposedDate,\n  $('DEV — Apply Approved Notion Session Date').first().json.id,\n  $('DEV — Gate Session Date Write').first().json.notionPageId,\n  $('DEV — Apply Approved Notion Session Date')\n    .first().json.properties['Event Date'].date.start.slice(0, 10)\n] }}\n"
+        }
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.7,
       "position": [
-        1792,
-        -144
+        2384,
+        -96
       ],
       "id": "1fd279e0-3e00-4ed3-bae1-4d635a0b23d0",
       "name": "DEV — Complete Session Date Operation",
@@ -589,8 +591,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        2064,
-        208
+        2128,
+        160
       ],
       "id": "c9ddf69e-d1bc-4581-b13c-67da61bc5bc7",
       "name": "DEV — Apply Approved Google Session Date",
@@ -604,14 +606,16 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "\nWITH completed_operation AS (\n    UPDATE sync_operations\n    SET\n        status = 'SUCCESS',\n        completed_at = NOW(),\n        error_message = NULL\n    WHERE id = 2\n      AND event_id = 21\n      AND entity_type = 'Session'\n      AND external_id = 'BR-S-000001'\n      AND field_name = 'Date'\n      AND target_system = 'Google'\n      AND attempted_value = to_jsonb('2027-01-22'::text)\n      AND status = 'PENDING'\n    RETURNING *\n),\nsaved_state AS (\n    INSERT INTO sync_field_state (\n        entity_type,\n        external_id,\n        field_name,\n        last_synced_value,\n        last_synced_at,\n        last_event_key\n    )\n    SELECT\n        'Session',\n        'BR-S-000001',\n        'Date',\n        to_jsonb('2027-01-22'::text),\n        NOW(),\n        e.event_key\n    FROM completed_operation op\n    JOIN sync_events e ON e.id = op.event_id\n    ON CONFLICT (entity_type, external_id, field_name)\n    DO UPDATE SET\n        last_synced_value = EXCLUDED.last_synced_value,\n        last_synced_at = EXCLUDED.last_synced_at,\n        last_event_key = EXCLUDED.last_event_key\n    RETURNING *\n),\nclosed_event AS (\n    UPDATE sync_events\n    SET\n        status = 'APPLIED',\n        processed_at = NOW()\n    WHERE id = 21\n      AND entity_type = 'Session'\n      AND external_id = 'BR-S-000001'\n      AND EXISTS (SELECT 1 FROM saved_state)\n    RETURNING id\n)\nSELECT\n    (SELECT COUNT(*) FROM completed_operation)\n        AS operations_completed,\n    (SELECT COUNT(*) FROM saved_state)\n        AS field_states_saved,\n    (SELECT COUNT(*) FROM closed_event)\n        AS events_closed;\n",
-        "options": {}
+        "query": "\nWITH completed_operation AS (\n    UPDATE sync_operations\n    SET\n        status = 'SUCCESS',\n        completed_at = NOW(),\n        error_message = NULL\n    WHERE id = $1::bigint\n      AND event_id = $2::bigint\n      AND entity_type = 'Session'\n      AND external_id = $3\n      AND field_name = 'Date'\n      AND target_system = 'Google'\n      AND attempted_value = to_jsonb($4::text)\n      AND status = 'PENDING'\n      AND $5 = $3\n      AND $6 = $4\n      AND EXISTS (\n          SELECT 1\n          FROM sync_events e\n          WHERE e.id = $2::bigint\n            AND e.origin = 'Notion'\n            AND e.status = 'RECEIVED'\n            AND e.external_id = $3\n      )\n    RETURNING *\n),\nsaved_state AS (\n    INSERT INTO sync_field_state (\n        entity_type,\n        external_id,\n        field_name,\n        last_synced_value,\n        last_synced_at,\n        last_event_key\n    )\n    SELECT\n        op.entity_type,\n        op.external_id,\n        op.field_name,\n        op.attempted_value,\n        NOW(),\n        e.event_key\n    FROM completed_operation op\n    JOIN sync_events e ON e.id = op.event_id\n    ON CONFLICT (entity_type, external_id, field_name)\n    DO UPDATE SET\n        last_synced_value = EXCLUDED.last_synced_value,\n        last_synced_at = EXCLUDED.last_synced_at,\n        last_event_key = EXCLUDED.last_event_key\n    RETURNING *\n),\nclosed_event AS (\n    UPDATE sync_events\n    SET\n        status = 'APPLIED',\n        processed_at = NOW()\n    WHERE id = $2::bigint\n      AND entity_type = 'Session'\n      AND external_id = $3\n      AND status = 'RECEIVED'\n      AND EXISTS (SELECT 1 FROM saved_state)\n    RETURNING id\n)\nSELECT\n    (SELECT COUNT(*) FROM completed_operation)\n        AS operations_completed,\n    (SELECT COUNT(*) FROM saved_state)\n        AS field_states_saved,\n    (SELECT COUNT(*) FROM closed_event)\n        AS events_closed;\n",
+        "options": {
+          "queryReplacement": "=\n{{ [\n  $('DEV — Gate Session Date Write').first().json.operationId,\n  $('DEV — Gate Session Date Write').first().json.eventId,\n  $('DEV — Gate Session Date Write').first().json.sessionId,\n  $('DEV — Gate Session Date Write').first().json.proposedDate,\n  $('DEV — Apply Approved Google Session Date').first().json['Session ID'],\n  $('DEV — Apply Approved Google Session Date').first().json.Date\n] }}\n"
+        }
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.7,
       "position": [
-        2272,
-        208
+        2384,
+        160
       ],
       "id": "b68b8357-7939-4a3f-9a05-c71b844b8dd8",
       "name": "DEV — Complete Google Session Date Operation",
@@ -646,7 +650,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "\nUPDATE sync_events\nSET\n    status = 'IGNORED',\n    processed_at = NOW()\nWHERE id = 20\n  AND origin = 'Notion'\n  AND entity_type = 'Session'\n  AND external_id = 'BR-S-000001'\n  AND status = 'RECEIVED'\n  AND changed_at BETWEEN\n      '2026-11-04T14:39:00Z'::timestamptz\n      AND '2026-11-04T14:41:00Z'::timestamptz\nRETURNING\n    id,\n    event_key,\n    status,\n    processed_at;\n",
+        "query": "\nUPDATE sync_events e\nSET\n    status = 'IGNORED',\n    processed_at = NOW()\nWHERE e.id = 176\n  AND e.origin = 'Notion'\n  AND e.status = 'RECEIVED'\n  AND e.external_id = 'BR-S-000001'\n  AND e.notion_page_id =\n      '3eac267d-550f-8156-b1f3-ce4a290a06ac'\n  AND EXISTS (\n      SELECT 1\n      FROM sync_operations o\n      JOIN sync_events source_event\n        ON source_event.id = o.event_id\n      WHERE o.id = 3\n        AND o.status = 'SUCCESS'\n        AND o.target_system = 'Notion'\n        AND o.external_id = e.external_id\n        AND o.field_name = 'Date'\n        AND o.attempted_value =\n            to_jsonb('2027-01-23'::text)\n        AND source_event.origin = 'Google'\n        AND e.changed_at BETWEEN\n            o.attempted_at AND o.completed_at\n  )\nRETURNING id, status, processed_at;\n",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -663,80 +667,42 @@
           "name": "DEV — BR Sync PostgreSQL"
         }
       }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "27742512-cf5e-41d9-ac23-b95a7ae04b9b",
+              "leftValue": "={{ $json.direction === 'GOOGLE_TO_NOTION' && $json.targetSystem === 'Notion' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1792,
+        48
+      ],
+      "id": "f053011b-b1ed-4b3b-a911-76093c42c654",
+      "name": "DEV — Write to Notion?"
     }
   ],
-  "pinData": {
-    "Webhook": [
-      {
-        "json": {
-          "headers": {
-            "host": "n8n-dev.theologenius.com",
-            "user-agent": "notion-api",
-            "content-length": "677",
-            "accept-encoding": "gzip, br",
-            "baggage": "sentry-environment=production,sentry-release=20261103.2053-9eb8a37,sentry-public_key=1aac75005a2497650c71a85189d5aeca,sentry-trace_id=a617a2bc014e40c3a11dd143884505b0",
-            "cdn-loop": "cloudflare; loops=1",
-            "cf-connecting-ip": "131.149.232.134",
-            "cf-ipcountry": "US",
-            "cf-ray": "a550245cdaa0fef4-PDX",
-            "cf-visitor": "{\"scheme\":\"https\"}",
-            "cf-warp-tag-id": "040befd2-d01d-4759-9ac9-09c53c15b2aa",
-            "connection": "keep-alive",
-            "content-type": "application/json",
-            "sentry-trace": "a617a2bc014e40c3a11dd143884505b0-bdcc28b711c3de94",
-            "traceparent": "00-c503effd3d4e1358d863fc400627e7c6-a2701699230e37fb-00",
-            "x-forwarded-for": "131.149.232.134",
-            "x-forwarded-proto": "https",
-            "x-notion-signature": "sha256=93faa263240f587733901435e783f6b5008475ee26fa9225f2939d5ccf06ae07"
-          },
-          "params": {},
-          "query": {},
-          "body": {
-            "id": "7e83f8d8-10a8-470c-b3ed-e38a3723f4f9",
-            "timestamp": "2026-11-04T02:19:52.083Z",
-            "workspace_id": "ee71f2e7-a1f2-4765-95af-f1dbbf56b809",
-            "workspace_name": "Theologenius",
-            "subscription_id": "40ed872b-594c-819c-9bc0-0099ff2060eb",
-            "integration_id": "3dcd872b-594c-8165-a226-00379e129b3c",
-            "authors": [
-              {
-                "id": "5d3a0efd-09da-4389-9b25-671598374114",
-                "type": "person"
-              }
-            ],
-            "attempt_number": 1,
-            "api_version": "2026-03-11",
-            "entity": {
-              "id": "3eac267d-550f-8156-b1f3-ce4a290a06ac",
-              "type": "page"
-            },
-            "type": "page.properties_updated",
-            "data": {
-              "parent": {
-                "id": "0558f1d3-7100-4984-8649-5165c80c2e5e",
-                "type": "database",
-                "data_source_id": "655cf0f3-93cd-4d72-920a-ad0805d06242"
-              },
-              "updated_properties": [
-                "%3C%3CtM"
-              ]
-            }
-          },
-          "webhookUrl": "http://localhost:5678/webhook/dev-br-notion-changes",
-          "executionMode": "production"
-        },
-        "binary": {
-          "data": {
-            "data": "eyJpZCI6IjdlODNmOGQ4LTEwYTgtNDcwYy1iM2VkLWUzOGEzNzIzZjRmOSIsInRpbWVzdGFtcCI6IjIwMjYtMTEtMDRUMDI6MTk6NTIuMDgzWiIsIndvcmtzcGFjZV9pZCI6ImVlNzFmMmU3LWExZjItNDc2NS05NWFmLWYxZGJiZjU2YjgwOSIsIndvcmtzcGFjZV9uYW1lIjoiVGhlb2xvZ2VuaXVzIiwic3Vic2NyaXB0aW9uX2lkIjoiNDBlZDg3MmItNTk0Yy04MTljLTliYzAtMDA5OWZmMjA2MGViIiwiaW50ZWdyYXRpb25faWQiOiIzZGNkODcyYi01OTRjLTgxNjUtYTIyNi0wMDM3OWUxMjliM2MiLCJhdXRob3JzIjpbeyJpZCI6IjVkM2EwZWZkLTA5ZGEtNDM4OS05YjI1LTY3MTU5ODM3NDExNCIsInR5cGUiOiJwZXJzb24ifV0sImF0dGVtcHRfbnVtYmVyIjoxLCJhcGlfdmVyc2lvbiI6IjIwMjYtMDMtMTEiLCJlbnRpdHkiOnsiaWQiOiIzZWFjMjY3ZC01NTBmLTgxNTYtYjFmMy1jZTRhMjkwYTA2YWMiLCJ0eXBlIjoicGFnZSJ9LCJ0eXBlIjoicGFnZS5wcm9wZXJ0aWVzX3VwZGF0ZWQiLCJkYXRhIjp7InBhcmVudCI6eyJpZCI6IjA1NThmMWQzLTcxMDAtNDk4NC04NjQ5LTUxNjVjODBjMmU1ZSIsInR5cGUiOiJkYXRhYmFzZSIsImRhdGFfc291cmNlX2lkIjoiNjU1Y2YwZjMtOTNjZC00ZDcyLTkyMGEtYWQwODA1ZDA2MjQyIn0sInVwZGF0ZWRfcHJvcGVydGllcyI6WyIlM0MlM0N0TSJdfX0=",
-            "mimeType": "application/json"
-          }
-        },
-        "pairedItem": {
-          "item": 0
-        }
-      }
-    ]
-  },
   "connections": {
     "Webhook": {
       "main": [
@@ -951,12 +917,7 @@
       "main": [
         [
           {
-            "node": "DEV — Apply Approved Notion Session Date",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "DEV — Apply Approved Google Session Date",
+            "node": "DEV — Write to Notion?",
             "type": "main",
             "index": 0
           }
@@ -984,6 +945,24 @@
           }
         ]
       ]
+    },
+    "DEV — Write to Notion?": {
+      "main": [
+        [
+          {
+            "node": "DEV — Apply Approved Notion Session Date",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DEV — Apply Approved Google Session Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -992,7 +971,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "c0526770-cb63-4b81-928b-27f86e0bdd51",
+  "versionId": "2d97e246-3727-4b16-af35-046af697cbd2",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "a035d710f952601e58e2e394cc86b8497b51f348ba066183cfc9a59870092c9e"
